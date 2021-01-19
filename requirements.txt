@@ -1,3 +1,2 @@
-joblib==1.0.0
-pycryptodome==3.9.9
 flask-cors==3.0.10
+flask-socketio==5.0.1

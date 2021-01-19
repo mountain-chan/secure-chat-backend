@@ -4,7 +4,7 @@ import traceback
 from time import strftime
 from flask import Flask, request
 from flask_cors import CORS
-from app.extensions import jwt, logger, db, ma
+from app.extensions import jwt, logger, db, ma, sio
 from .api import v1 as api_v1
 from .settings import ProdConfig
 
@@ -35,6 +35,7 @@ def register_extensions(app):
     db.init_app(app)  # SQLAlchemy
     ma.init_app(app)  # Marshmallow json parser and validator
     jwt.init_app(app)
+    sio.init_app(app)
 
     @app.after_request
     def after_request(response):
@@ -80,3 +81,4 @@ def register_blueprints(app):
     """
     app.register_blueprint(api_v1.auth.api, url_prefix='/api/auth')
     app.register_blueprint(api_v1.user.api, url_prefix='/api/users')
+    app.register_blueprint(api_v1.chat.api, url_prefix='/api/chats')

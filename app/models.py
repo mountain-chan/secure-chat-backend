@@ -71,7 +71,8 @@ class Message(db.Model):
 
     id = db.Column(db.String(50), primary_key=True)
     content = db.Column(TEXT)
-    user_id = db.Column(db.ForeignKey('users.id'), index=True)
+    sender_id = db.Column(db.ForeignKey('users.id'), index=True)
+    receiver_id = db.Column(db.ForeignKey('users.id'), index=True)
     create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
     def to_json(self):
