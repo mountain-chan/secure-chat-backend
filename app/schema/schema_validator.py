@@ -6,7 +6,7 @@ user_validator = {
             "minLength": 3,
             "maxLength": 50
         },
-        "name": {
+        "display_name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 50
@@ -15,24 +15,9 @@ user_validator = {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-        },
-        "phone": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 20
-        },
-        "email": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50
-        },
-        "is_admin": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1,
         }
     },
-    "required": ["name", "gender", "phone", "email"]
+    "required": []
 }
 
 password_validator = {

@@ -1,15 +1,14 @@
 from datetime import timedelta
 from flask import Blueprint
 from werkzeug.security import check_password_hash
-from app.extensions import jwt, logger, client
-from app.utils import parse_req, FieldString, send_result, send_error, get_datetime_now, add_token_to_database, \
-    revoke_token, is_token_revoked
+from app.extensions import jwt, logger
+from app.models import User, Token
+from app.utils import parse_req, FieldString, send_result, send_error, get_datetime_now
 from flask_jwt_extended import (
     jwt_required, create_access_token,
     jwt_refresh_token_required, get_jwt_identity,
     create_refresh_token, get_raw_jwt
 )
-
 
 ACCESS_EXPIRES = timedelta(days=30)
 REFRESH_EXPIRES = timedelta(days=90)
@@ -41,27 +40,26 @@ def login():
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message='Invalid username or password.\nPlease try again')
 
-    user = client.db.users.find_one({'username': username})
+    user = User.query.filter_by(username=username)
     if user is None:
         return send_error(message='Invalid username or password.\nPlease try again')
 
-    if not check_password_hash(user["password_hash"], password):
+    if not check_password_hash(user.password_hash, password):
         return send_error(message='Invalid username or password.\nPlease try again')
 
     access_token = create_access_token(identity=user["_id"], expires_delta=ACCESS_EXPIRES)
     refresh_token = create_refresh_token(identity=user["_id"], expires_delta=REFRESH_EXPIRES)
 
     # Store the tokens in our store with a status of not currently revoked.
-    add_token_to_database(access_token, user["_id"])
-    add_token_to_database(refresh_token, user["_id"])
+    Token.add_token_to_database(access_token, user.id)
+    Token.add_token_to_database(refresh_token, user.id)
 
     data = {
         'access_token': access_token,
         'refresh_token': refresh_token,
-        'username': user["username"],
-        'is_admin': user["is_admin"],
-        'user_id': user["_id"],
-        'name': user["name"],
+        'username': user.username,
+        'user_id': user.id,
+        'display_name': user.display_name,
     }
 
     return send_result(data=data, message="Logged in successfully!")
@@ -90,7 +88,7 @@ def refresh():
     access_token = create_access_token(identity=current_user_id, expires_delta=ACCESS_EXPIRES)
 
     # Store the tokens in our store with a status of not currently revoked.
-    add_token_to_database(access_token, current_user_id)
+    Token.add_token_to_database(access_token, current_user_id)
 
     ret = {
         'access_token': access_token
@@ -109,7 +107,7 @@ def logout():
 
     jti = get_raw_jwt()['jti']
     # revoke current token from database
-    revoke_token(jti)
+    Token.revoke_token(jti)
 
     return send_result(message="Logout successfully!")
 
@@ -118,4 +116,4 @@ def logout():
 @jwt.token_in_blacklist_loader
 def check_if_token_is_revoked(decrypted_token):
     # return False
-    return is_token_revoked(decrypted_token)
+    return Token.is_token_revoked(decrypted_token)
