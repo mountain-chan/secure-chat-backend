@@ -1,2 +1,9 @@
+Flask-JWT-Extended
 flask-cors==3.0.10
 flask-socketio==5.0.1
+marshmallow==3.10.0
+flask-marshmallow==0.14.0
+flask-sqlalchemy==2.4.4
+marshmallow-sqlalchemy==0.24.1
+webargs==7.0.1
+jsonschema==3.2.0
