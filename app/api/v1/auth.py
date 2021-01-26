@@ -40,15 +40,15 @@ def login():
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message='Invalid username or password.\nPlease try again')
 
-    user = User.query.filter_by(username=username)
+    user = User.query.filter_by(username=username).first()
     if user is None:
         return send_error(message='Invalid username or password.\nPlease try again')
 
     if not check_password_hash(user.password_hash, password):
         return send_error(message='Invalid username or password.\nPlease try again')
 
-    access_token = create_access_token(identity=user["_id"], expires_delta=ACCESS_EXPIRES)
-    refresh_token = create_refresh_token(identity=user["_id"], expires_delta=REFRESH_EXPIRES)
+    access_token = create_access_token(identity=user.id, expires_delta=ACCESS_EXPIRES)
+    refresh_token = create_refresh_token(identity=user.id, expires_delta=REFRESH_EXPIRES)
 
     # Store the tokens in our store with a status of not currently revoked.
     Token.add_token_to_database(access_token, user.id)

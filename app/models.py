@@ -6,6 +6,47 @@ from sqlalchemy.dialects.mysql import INTEGER, TEXT
 from app.utils import send_error, get_timestamp_now
 
 
+class Group(db.Model):
+    __tablename__ = 'groups'
+
+    id = db.Column(db.String(50), primary_key=True)
+    group_name = db.Column(db.String(100), default="Group Chat")
+    create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+
+    messages = db.relationship('Message', cascade="all,delete")
+    group_user = db.relationship('GroupUser', cascade="all,delete")
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "group_name": self.group_name,
+            "create_date": self.create_date,
+            "modified_date": self.modified_date
+        }
+
+    @staticmethod
+    def many_to_json(objects):
+        items = []
+        for o in objects:
+            item = {
+                "id": o.id,
+                "group_name": o.group_name,
+                "create_date": o.create_date,
+                "modified_date": o.modified_date
+            }
+            items.append(item)
+        return items
+
+    @classmethod
+    def get_all(cls):
+        return cls.query.order_by(cls.create_date).all()
+
+    @classmethod
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -39,62 +80,79 @@ class User(db.Model):
         }
 
     @staticmethod
-    def many_to_json(users):
+    def many_to_json(objects):
         items = []
-        for user in users:
+        for o in objects:
             item = {
-                "id": user.id,
-                "username": user.username,
-                "display_name": user.display_name,
-                "password_hash": user.password_hash,
-                "force_change_password": user.force_change_password,
-                "create_date": user.create_date
+                "id": o.id,
+                "username": o.username,
+                "display_name": o.display_name,
+                "password_hash": o.password_hash,
+                "force_change_password": o.force_change_password,
+                "create_date": o.create_date
             }
             items.append(item)
-        return users
+        return items
 
-    @staticmethod
-    def get_all():
-        return User.query.order_by(User.username).all()
+    @classmethod
+    def get_all(cls):
+        return cls.query.order_by(cls.username).all()
 
-    @staticmethod
-    def get_current_user():
-        return User.query.get(get_jwt_identity())
+    @classmethod
+    def get_current_user(cls):
+        return cls.query.get(get_jwt_identity())
 
-    @staticmethod
-    def get_by_id(_id):
-        return User.query.get(_id)
+    @classmethod
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+
+class GroupUser(db.Model):
+    __tablename__ = 'group_user'
+
+    user_id = db.Column(db.ForeignKey('users.id'), primary_key=True)
+    group_id = db.Column(db.ForeignKey('groups.id'), primary_key=True)
+
+    @classmethod
+    def get_by_group_id(cls, group_id):
+        return cls.query.filter_by(group_id=group_id).first()
+
+    @classmethod
+    def get_by_user_id(cls, user_id):
+        return cls.query.filter_by(user_id=user_id).first()
 
 
 class Message(db.Model):
     __tablename__ = 'messages'
 
     id = db.Column(db.String(50), primary_key=True)
-    content = db.Column(TEXT)
-    sender_id = db.Column(db.ForeignKey('users.id'), index=True)
-    receiver_id = db.Column(db.ForeignKey('users.id'), index=True)
+    message_hash = db.Column(TEXT)
+    sender_id = db.Column(db.ForeignKey('users.id'))
+    group_id = db.Column(db.ForeignKey('groups.id'))
     create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
     def to_json(self):
         return {
             "id": self.id,
-            "content": self.content,
-            "user_id": self.user_id,
+            "message_hash": self.message_hash,
+            "sender_id": self.sender_id,
+            "group_id": self.group_id,
             "create_date": self.create_date
         }
 
     @staticmethod
-    def many_to_json(messages):
+    def many_to_json(objects):
         items = []
-        for message in messages:
+        for o in objects:
             item = {
-                "id": message.id,
-                "content": message.content,
-                "user_id": message.user_id,
-                "create_date": message.create_date
+                "id": o.id,
+                "message_hash": o.message_hash,
+                "sender_id": o.sender_id,
+                "group_id": o.group_id,
+                "create_date": o.create_date
             }
             items.append(item)
-        return messages
+        return items
 
     @classmethod
     def get_all(cls):
@@ -105,8 +163,8 @@ class Message(db.Model):
         return cls.query.get(_id)
 
     @classmethod
-    def get_messages(cls, user_id):
-        return cls.query.filter_by(user_id=user_id).all()
+    def get_messages(cls, group_id):
+        return cls.query.filter_by(group_id=group_id).order_by(cls.create_date.desc()).all()
 
 
 class Token(db.Model):

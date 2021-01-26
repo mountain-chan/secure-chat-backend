@@ -36,7 +36,7 @@ def create_user():
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
 
-    user_duplicated = User.query.filter_by(username=username)
+    user_duplicated = User.query.filter_by(username=username).first()
     if user_duplicated:
         return send_error(message="The username has existed!")
 

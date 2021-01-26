@@ -72,7 +72,7 @@ def get_version(version):
     Returns:
 
     """
-    return "Booking v2.0" if version == 2 else "Booking v1.0"
+    return "MTA v2.0" if version == 2 else "MTA v1.0"
 
 
 class FieldString(fields.String):
@@ -175,3 +175,21 @@ def get_timestamp_now():
             current time in timestamp
     """
     return int(time())
+
+
+def generate_id(id1, id2):
+    """
+    Generate id from two id
+    Args:
+        id1:
+        id2:
+
+    Returns:
+
+    """
+    u11 = bytes(id1, "ascii")
+    u22 = bytes(id2, "ascii")
+    _id = ""
+    for i, j in zip(u22, u11):
+        _id += chr((i + j) % 91 + 32)
+    return _id

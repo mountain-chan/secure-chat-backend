@@ -37,4 +37,4 @@ class Worker:
 if __name__ == '__main__':
     worker = Worker()
     worker.insert_default_users()
-    print("=" * 50, "Database Migrate Completed", "=" * 50)
+    print("=" * 50, "Database migration completed", "=" * 50)

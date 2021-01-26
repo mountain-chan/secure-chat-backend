@@ -79,6 +79,8 @@ def register_blueprints(app):
     :param app:
     :return:
     """
-    app.register_blueprint(api_v1.auth.api, url_prefix='/api/auth')
-    app.register_blueprint(api_v1.user.api, url_prefix='/api/users')
-    app.register_blueprint(api_v1.chat.api, url_prefix='/api/chats')
+    app.register_blueprint(api_v1.auth.api, url_prefix='/api/v1/auth')
+    app.register_blueprint(api_v1.user.api, url_prefix='/api/v1/users')
+    app.register_blueprint(api_v1.chat.api, url_prefix='/api/v1/chats')
+    app.register_blueprint(api_v1.group.api, url_prefix='/api/v1/groups')
+
