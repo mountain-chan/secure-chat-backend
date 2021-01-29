@@ -37,6 +37,14 @@ def register_extensions(app):
     jwt.init_app(app)
     sio.init_app(app)
 
+    @sio.on_error()  # Handles the default namespace
+    def error_handler(e):
+        print(e)
+
+    @sio.on_error_default  # handles all namespaces without an explicit error handler
+    def default_error_handler(e):
+        print(e)
+
     @app.after_request
     def after_request(response):
         """

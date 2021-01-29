@@ -1,6 +1,7 @@
 from app.app import create_app
 from app.settings import DevConfig
 
+
 # call config service
 CONFIG = DevConfig
 
