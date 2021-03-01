@@ -204,9 +204,9 @@ def get_all_users():
     """
 
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
 
-    users = User.get_all(page_number=page, page_size=per_page)
+    users = User.get_all(page_number=page, page_size=page_size)
     results = User.many_to_json(users)
     return send_result(data=results)
 
@@ -256,11 +256,11 @@ def get_chats():
     """
 
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
 
     items = Group.query.join(GroupUser, GroupUser.group_id == Group.id).filter(
         GroupUser.user_id == get_jwt_identity()).join(Message, Message.group_id == Group.id).order_by(
-        Message.create_date.desc()).paginate(page=page, per_page=per_page, error_out=False).items
+        Message.create_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
     groups = Group.many_to_json(items)
     for group in groups:
         message = Message.query.filter_by(group_id=group["id"]).order_by(Message.create_date.desc()).first()

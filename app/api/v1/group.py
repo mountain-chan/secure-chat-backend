@@ -135,9 +135,9 @@ def get_all():
     """
 
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
 
-    groups = Group.get_all(page_number=page, page_size=per_page)
+    groups = Group.get_all(page_number=page, page_size=page_size)
     dt = Group.many_to_json(groups)
 
     return send_result(data=dt)
