@@ -31,6 +31,7 @@ def create_group():
         return send_error(message="Parameters error: " + str(ex))
 
     groups = Group.get_all()
+    # check if members group existed
     for g in groups:
         group_user = GroupUser.query.filter_by(group_id=g.id).all()
         if len(group_user) == len(users_id):
@@ -45,9 +46,9 @@ def create_group():
     db.session.add(new_group)
     # insert new values to table group_user
     for user_id in users_id:
-        user = User.get_by_id(users_id)
+        user = User.get_by_id(user_id)
         if user:
-            new_obj = GroupUser(group_id, user_id)
+            new_obj = GroupUser(user_id=user_id, group_id=group_id)
             db.session.add(new_obj)
 
     db.session.commit()
@@ -132,7 +133,11 @@ def get_all():
 
         Examples::
     """
-    groups = Group.get_all()
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    groups = Group.get_all(page_number=page, page_size=per_page)
     dt = Group.many_to_json(groups)
 
     return send_result(data=dt)
@@ -149,11 +154,14 @@ def get_by_id(group_id):
 
         Examples::
     """
-    group = Group.get_by_id(group_id)
-    if group is None:
+    group_obj = Group.get_by_id(group_id)
+    if group_obj is None:
         return send_error(message="Not found error!")
+    members = User.query.join(GroupUser, GroupUser.user_id == User.id).filter(GroupUser.group_id == group_id).all()
+    group = group_obj.to_json()
+    group["members"] = User.many_to_json(members)
 
-    return send_result(data=group.to_json())
+    return send_result(data=group)
 
 
 @api.route('/<string:group_id>', methods=['DELETE'])

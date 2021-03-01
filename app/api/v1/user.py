@@ -4,7 +4,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from jsonschema import validate
 from werkzeug.security import check_password_hash
-from app.models import User, Token
+from app.models import User, Token, GroupUser, Group, Message
 from app.schema.schema_validator import user_validator, password_validator
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
     get_timestamp_now
@@ -159,7 +159,7 @@ def change_password():
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message='Parse error ' + str(ex))
 
-    if not check_password_hash(current_user["password_hash"], current_password):
+    if not check_password_hash(current_user.password_hash, current_password):
         return send_error(message="Current password incorrect!")
 
     if is_password_contain_space(new_password):
@@ -203,7 +203,10 @@ def get_all_users():
 
     """
 
-    users = User.get_all()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    users = User.get_all(page_number=page, page_size=per_page)
     results = User.many_to_json(users)
     return send_result(data=results)
 
@@ -239,3 +242,28 @@ def get_profile():
     current_user = User.get_current_user()
 
     return send_result(data=current_user.to_json())
+
+
+@api.route('/chats', methods=['GET'])
+@jwt_required
+def get_chats():
+    """ This api for the user get their list chats.
+
+        Returns:
+
+        Examples::
+
+    """
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    items = Group.query.join(GroupUser, GroupUser.group_id == Group.id).filter(
+        GroupUser.user_id == get_jwt_identity()).join(Message, Message.group_id == Group.id).order_by(
+        Message.create_date.desc()).paginate(page=page, per_page=per_page, error_out=False).items
+    groups = Group.many_to_json(items)
+    for group in groups:
+        message = Message.query.filter_by(group_id=group["id"]).order_by(Message.create_date.desc()).first()
+        group["latest_message"] = message.to_json()
+
+    return send_result(data=groups)

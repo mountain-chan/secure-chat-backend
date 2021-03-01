@@ -28,9 +28,22 @@ def chat(group_id):
         group_id = generate_id(current_user_id, receiver_id)
         check_group = Group.get_by_id(group_id)
         if check_group is None:
+            # create new group
             new_group = Group(id=group_id, group_name=group_id)
             db.session.add(new_group)
+
+            # insert new values to group users table
+            new_g_u = GroupUser(user_id=current_user_id, group_id=group_id)
+            db.session.add(new_g_u)
+            if current_user_id != receiver_id:
+                new_g_u = GroupUser(user_id=receiver_id, group_id=group_id)
+                db.session.add(new_g_u)
+
             db.session.commit()
+
+    check_g_u = GroupUser.query.filter_by(user_id=get_jwt_identity(), group_id=group_id).first()
+    if check_g_u is None:
+        return send_error(message="Invalid group id")
 
     try:
         json_data = request.get_json()
@@ -77,8 +90,6 @@ def get(group_id):
 @jwt_required
 def delete(message_id):
     """ This is api for .
-
-        Request Body:
 
         Returns:
 

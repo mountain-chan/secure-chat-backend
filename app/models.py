@@ -39,8 +39,8 @@ class Group(db.Model):
         return items
 
     @classmethod
-    def get_all(cls):
-        return cls.query.order_by(cls.create_date).all()
+    def get_all(cls, page_number=1, page_size=10):
+        return cls.query.order_by(cls.create_date).paginate(page=page_number, per_page=page_size).items
 
     @classmethod
     def get_by_id(cls, _id):
@@ -63,6 +63,7 @@ class User(db.Model):
     create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    # avatar_path = db.Column(db.String(255))
 
     messages = db.relationship('Message', cascade="all,delete")
 
@@ -74,7 +75,6 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "display_name": self.display_name,
-            "password_hash": self.password_hash,
             "force_change_password": self.force_change_password,
             "create_date": self.create_date
         }
@@ -87,7 +87,6 @@ class User(db.Model):
                 "id": o.id,
                 "username": o.username,
                 "display_name": o.display_name,
-                "password_hash": o.password_hash,
                 "force_change_password": o.force_change_password,
                 "create_date": o.create_date
             }
@@ -95,8 +94,8 @@ class User(db.Model):
         return items
 
     @classmethod
-    def get_all(cls):
-        return cls.query.order_by(cls.username).all()
+    def get_all(cls, page_number=1, page_size=10):
+        return cls.query.order_by(cls.username).paginate(page=page_number, per_page=page_size).items
 
     @classmethod
     def get_current_user(cls):
@@ -163,8 +162,9 @@ class Message(db.Model):
         return cls.query.get(_id)
 
     @classmethod
-    def get_messages(cls, group_id):
-        return cls.query.filter_by(group_id=group_id).order_by(cls.create_date.desc()).all()
+    def get_messages(cls, group_id, page_number=1, page_size=10):
+        return cls.query.filter_by(group_id=group_id).order_by(
+            cls.create_date.desc()).paginate(page=page_number, per_page=page_size).items
 
 
 class Token(db.Model):
@@ -279,7 +279,5 @@ class Token(db.Model):
         set it up with flask cli, etc.
         """
         now_in_seconds = get_timestamp_now()
-        expired = Token.query.filter(Token.expires < now_in_seconds).all()
-        for token in expired:
-            db.session.delete(token)
+        Token.query.filter(Token.expires < now_in_seconds).delete()
         db.session.commit()
