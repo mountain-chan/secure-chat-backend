@@ -1,7 +1,7 @@
 {
     "users": [
           {
-            "id": "admin_id",
+            "id": "457c17c8-7a74-11eb-9439-0242ac130002",
             "username": "admin",
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Admin",
@@ -9,7 +9,7 @@
             "gender": 1
         },
         {
-            "id": "5fc8f64547565cb58cded95e",
+            "id": "517f6fe8-7a74-11eb-9439-0242ac130002",
             "username": "NguyenKhanh",
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Nguyễn Khánh",
@@ -17,7 +17,7 @@
             "gender": 1
         },
         {
-            "id": "5fc8f64547565cb58cded95c",
+            "id": "56f1ee38-7a74-11eb-9439-0242ac130002",
             "username": "LyChan",
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Lý Chản",

@@ -72,7 +72,7 @@ def get_version(version):
     Returns:
 
     """
-    return "MTA v2.0" if version == 2 else "MTA v1.0"
+    return "Security Chat v2.0" if version == 2 else "Security Chat v1.0"
 
 
 class FieldString(fields.String):
@@ -177,6 +177,12 @@ def get_timestamp_now():
     return int(time())
 
 
+mapping_char_to_number = {**{chr(i): i - 48 for i in range(48, 58)},
+                          **{chr(i): i - 87 for i in range(97, 123)}}
+mapping_number_to_char = {**{i: chr(i + 48) for i in range(0, 10)},
+                          **{i: chr(i + 87) for i in range(10, 36)}}
+
+
 def generate_id(id1, id2):
     """
     Generate id from two id
@@ -187,9 +193,16 @@ def generate_id(id1, id2):
     Returns:
 
     """
-    u11 = bytes(id1, "ascii")
-    u22 = bytes(id2, "ascii")
-    _id = ""
-    for i, j in zip(u22, u11):
-        _id += chr((i + j) % 91 + 32)
-    return _id
+    u11 = id1
+    u22 = id2
+    arr = [8, 4, 4, 4, 12]
+    new_id = ""
+    index = 0
+    for item in arr:
+        for i in range(item):
+            new_id += mapping_number_to_char[
+                (mapping_char_to_number[u11[index]] + mapping_char_to_number[u22[index]]) % 36]
+            index += 1
+        index += 1
+        new_id += '-'
+    return new_id[:-1]
