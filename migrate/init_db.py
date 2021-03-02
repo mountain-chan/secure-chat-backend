@@ -1,11 +1,15 @@
 import json
 from flask import Flask
 
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
 from app.extensions import db
 from app.models import User
 from app.settings import DevConfig, ProdConfig, os
 
 CONFIG = DevConfig if os.environ.get('DevConfig') == '1' else ProdConfig
+default_file = "default.json" if os.environ.get('DevConfig') == '1' else "migrate/default.json"
 
 
 class Worker:
@@ -22,7 +26,7 @@ class Worker:
         db.drop_all()  # drop all tables
         db.create_all()  # create a new schema
 
-        with open('default.json', encoding='utf-8') as file:
+        with open(default_file, encoding='utf-8') as file:
             self.default_data = json.load(file)
 
     def insert_default_users(self):

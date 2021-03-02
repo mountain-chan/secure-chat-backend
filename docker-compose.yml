@@ -2,17 +2,17 @@ version: "3"
 
 services:
 
-#  api:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    command: bash -c "python main.py"
-#    ports:
-#      - "5010:5012"
-#    depends_on:
-#      - db
-#    networks:
-#      - chat-net
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "python main.py"
+    ports:
+      - "5010:5012"
+    depends_on:
+      - migrate
+    networks:
+      - chat-net
 
   migrate:
     build:
