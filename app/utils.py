@@ -72,7 +72,7 @@ def get_version(version):
     Returns:
 
     """
-    return "Security Chat v2.0" if version == 2 else "Security Chat v1.0"
+    return "Secure Chat v2.0" if version == 2 else "Secure Chat v1.0"
 
 
 class FieldString(fields.String):
