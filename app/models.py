@@ -11,7 +11,7 @@ class Group(db.Model):
 
     id = db.Column(db.String(50), primary_key=True)
     group_name = db.Column(db.String(100), default="Group Chat")
-    create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
     messages = db.relationship('Message', cascade="all,delete")
@@ -21,7 +21,7 @@ class Group(db.Model):
         return {
             "id": self.id,
             "group_name": self.group_name,
-            "create_date": self.create_date,
+            "created_date": self.created_date,
             "modified_date": self.modified_date
         }
 
@@ -32,7 +32,7 @@ class Group(db.Model):
             item = {
                 "id": o.id,
                 "group_name": o.group_name,
-                "create_date": o.create_date,
+                "created_date": o.created_date,
                 "modified_date": o.modified_date
             }
             items.append(item)
@@ -40,7 +40,7 @@ class Group(db.Model):
 
     @classmethod
     def get_all(cls, page_number=1, page_size=10):
-        return cls.query.order_by(cls.create_date).paginate(page=page_number, per_page=page_size).items
+        return cls.query.order_by(cls.created_date).paginate(page=page_number, per_page=page_size).items
 
     @classmethod
     def get_by_id(cls, _id):
@@ -60,10 +60,10 @@ class User(db.Model):
     address = db.Column(db.String(255))
     login_failed_attempts = db.Column(db.SmallInteger, default=0)
     force_change_password = db.Column(db.Boolean, default=0)
-    create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
-    # avatar_path = db.Column(db.String(255))
+    avatar_path = db.Column(db.String(255))
 
     messages = db.relationship('Message', cascade="all,delete")
 
@@ -76,7 +76,7 @@ class User(db.Model):
             "username": self.username,
             "display_name": self.display_name,
             "force_change_password": self.force_change_password,
-            "create_date": self.create_date
+            "created_date": self.created_date
         }
 
     @staticmethod
@@ -88,7 +88,7 @@ class User(db.Model):
                 "username": o.username,
                 "display_name": o.display_name,
                 "force_change_password": o.force_change_password,
-                "create_date": o.create_date
+                "created_date": o.created_date
             }
             items.append(item)
         return items
@@ -128,7 +128,7 @@ class Message(db.Model):
     message_hash = db.Column(TEXT)
     sender_id = db.Column(db.ForeignKey('users.id'))
     group_id = db.Column(db.ForeignKey('groups.id'))
-    create_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
     def to_json(self):
         return {
@@ -136,7 +136,7 @@ class Message(db.Model):
             "message_hash": self.message_hash,
             "sender_id": self.sender_id,
             "group_id": self.group_id,
-            "create_date": self.create_date
+            "created_date": self.created_date
         }
 
     @staticmethod
@@ -148,7 +148,7 @@ class Message(db.Model):
                 "message_hash": o.message_hash,
                 "sender_id": o.sender_id,
                 "group_id": o.group_id,
-                "create_date": o.create_date
+                "created_date": o.created_date
             }
             items.append(item)
         return items
@@ -164,7 +164,7 @@ class Message(db.Model):
     @classmethod
     def get_messages(cls, group_id, page_number=1, page_size=10):
         return cls.query.filter_by(group_id=group_id).order_by(
-            cls.create_date.desc()).paginate(page=page_number, per_page=page_size).items
+            cls.created_date.desc()).paginate(page=page_number, per_page=page_size).items
 
 
 class Token(db.Model):

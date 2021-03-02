@@ -1,13 +1,17 @@
+import os
 import uuid
 
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from jsonschema import validate
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, safe_str_cmp
+from werkzeug.utils import secure_filename
+
+from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
 from app.models import User, Token, GroupUser, Group, Message
 from app.schema.schema_validator import user_validator, password_validator
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
-    get_timestamp_now
+    get_timestamp_now, allowed_file_img
 from app.extensions import logger, db
 
 api = Blueprint('users', __name__)
@@ -43,11 +47,11 @@ def create_user():
     if is_password_contain_space(password):
         return send_error(message='Password cannot contain spaces')
 
-    create_date = get_timestamp_now()
+    created_date = get_timestamp_now()
     _id = str(uuid.uuid1())
     new_values = User(id=_id, username=username, password_hash=hash_password(password),
-                      create_date=create_date, is_active=True, force_change_password=True,
-                      pub_key=pub_key, modified_date_password=create_date)
+                      created_date=created_date, is_active=True, force_change_password=True,
+                      pub_key=pub_key, modified_date_password=created_date)
     db.session.add(new_values)
     db.session.commit()
     data = {
@@ -260,10 +264,65 @@ def get_chats():
 
     items = Group.query.join(GroupUser, GroupUser.group_id == Group.id).filter(
         GroupUser.user_id == get_jwt_identity()).join(Message, Message.group_id == Group.id).order_by(
-        Message.create_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
+        Message.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
     groups = Group.many_to_json(items)
     for group in groups:
-        message = Message.query.filter_by(group_id=group["id"]).order_by(Message.create_date.desc()).first()
+        message = Message.query.filter_by(group_id=group["id"]).order_by(Message.created_date.desc()).first()
         group["latest_message"] = message.to_json()
 
     return send_result(data=groups)
+
+
+@api.route('/avatar', methods=['PUT'])
+@jwt_required
+def change_avatar():
+    """ This api for all user change their avatar.
+
+        Request Body:
+
+        Returns:
+
+        Examples::
+
+    """
+
+    user = User.get_current_user()
+
+    try:
+        image = request.files['image']
+    except Exception as ex:
+        return send_error(message=str(ex))
+
+    if not allowed_file_img(image.filename):
+        return send_error(message="Invalid image file")
+
+    filename = image.filename
+    filename = user.id + filename
+    filename = secure_filename(filename)
+    if not safe_str_cmp(user.avatar_path, DEFAULT_AVATAR):
+        list_file = os.listdir(AVATAR_PATH)
+        for i in list_file:
+            if safe_str_cmp(i, user.avatar_path):
+                os.remove(os.path.join(AVATAR_PATH, i))
+                break
+
+    path = os.path.join(AVATAR_PATH, filename)
+    path_server = os.path.join(AVATAR_PATH_SEVER, filename)
+    try:
+        image.save(path)
+        user.avatar_path = path
+        db.session.commit()
+    except Exception as ex:
+        return send_error(message=str(ex))
+
+    return send_result(message="Change avatar successfully")
+
+
+@api.route('/avatar', methods=['DELETE'])
+@jwt_required
+def delete_avatar():
+    list_file = os.listdir(AVATAR_PATH)
+    for i in list_file:
+        if not safe_str_cmp(i, DEFAULT_AVATAR):
+            os.remove(os.path.join(AVATAR_PATH, i))
+    return send_result()

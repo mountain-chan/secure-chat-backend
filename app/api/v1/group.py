@@ -40,9 +40,9 @@ def create_group():
             if set_users_id == set_users_group:
                 return send_result(data=g.to_json())
 
-    create_date = get_timestamp_now()
+    created_date = get_timestamp_now()
     group_id = str(uuid.uuid1())
-    new_group = Group(id=group_id, group_name=group_name, create_date=create_date)
+    new_group = Group(id=group_id, group_name=group_name, created_date=created_date)
     db.session.add(new_group)
     # insert new values to table group_user
     for user_id in users_id:
