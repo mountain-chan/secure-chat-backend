@@ -299,10 +299,11 @@ def change_avatar():
     filename = image.filename
     filename = user.id + filename
     filename = secure_filename(filename)
-    if not safe_str_cmp(user.avatar_path, DEFAULT_AVATAR):
+    old_avatar = user.avatar_path.split("/")[-1]
+    if not safe_str_cmp(old_avatar, DEFAULT_AVATAR):
         list_file = os.listdir(AVATAR_PATH)
         for i in list_file:
-            if safe_str_cmp(i, user.avatar_path):
+            if safe_str_cmp(i, old_avatar):
                 os.remove(os.path.join(AVATAR_PATH, i))
                 break
 
