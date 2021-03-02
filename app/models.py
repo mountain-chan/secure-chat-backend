@@ -1,5 +1,5 @@
 # coding: utf-8
-
+from app.enums import AVATAR_PATH_SEVER, DEFAULT_AVATAR
 from app.extensions import db
 from flask_jwt_extended import decode_token, get_jwt_identity, get_raw_jwt
 from sqlalchemy.dialects.mysql import INTEGER, TEXT
@@ -63,7 +63,7 @@ class User(db.Model):
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
-    avatar_path = db.Column(db.String(255))
+    avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
 
     messages = db.relationship('Message', cascade="all,delete")
 
@@ -76,7 +76,8 @@ class User(db.Model):
             "username": self.username,
             "display_name": self.display_name,
             "force_change_password": self.force_change_password,
-            "created_date": self.created_date
+            "created_date": self.created_date,
+            "avatar_path": self.avatar_path
         }
 
     @staticmethod
@@ -88,7 +89,8 @@ class User(db.Model):
                 "username": o.username,
                 "display_name": o.display_name,
                 "force_change_password": o.force_change_password,
-                "created_date": o.created_date
+                "created_date": o.created_date,
+                "avatar_path": o.avatar_path
             }
             items.append(item)
         return items

@@ -310,7 +310,7 @@ def change_avatar():
     path_server = os.path.join(AVATAR_PATH_SEVER, filename)
     try:
         image.save(path)
-        user.avatar_path = path
+        user.avatar_path = path_server
         db.session.commit()
     except Exception as ex:
         return send_error(message=str(ex))
