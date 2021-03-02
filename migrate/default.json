@@ -6,8 +6,7 @@
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Admin",
             "pub_key": "s",
-            "gender": 1,
-            "avatar_path": "http://localhost:5012/avatars/default_avatar.png"
+            "gender": 1
         },
         {
             "id": "517f6fe8-7a74-11eb-9439-0242ac130002",
@@ -15,8 +14,7 @@
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Nguyễn Khánh",
             "pub_key": "s",
-            "gender": 1,
-            "avatar_path": "http://localhost:5012/avatars/default_avatar.png"
+            "gender": 1
         },
         {
             "id": "56f1ee38-7a74-11eb-9439-0242ac130002",
@@ -24,8 +22,7 @@
             "password_hash": "pbkdf2:sha256:150000$VuKE7ySs$ced9ddc3a3ffddbf73f47af936797eb2b4c594e39e452456f9496f72ed7028ce",
             "display_name": "Lý Chản",
             "pub_key": "s",
-            "gender": 1,
-            "avatar_path": "http://localhost:5012/avatars/default_avatar.png"
+            "gender": 1
         }
     ]
 }
