@@ -1,4 +1,4 @@
-Flask-JWT-Extended
+Flask-JWT-Extended==3.24.1
 flask-cors==3.0.10
 marshmallow==3.10.0
 flask-marshmallow==0.14.0
