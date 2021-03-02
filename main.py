@@ -1,9 +1,8 @@
 from app.app import create_app
-from app.settings import DevConfig
 
+from app.settings import DevConfig, ProdConfig, os
 
-# call config service
-CONFIG = DevConfig
+CONFIG = DevConfig if os.environ.get('DevConfig') == '1' else ProdConfig
 
 app = create_app(config_object=CONFIG)
 

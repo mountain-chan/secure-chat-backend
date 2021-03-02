@@ -3,20 +3,22 @@ from flask import Flask
 
 from app.extensions import db
 from app.models import User
-from app.settings import DevConfig
+from app.settings import DevConfig, ProdConfig, os
+
+CONFIG = DevConfig if os.environ.get('DevConfig') == '1' else ProdConfig
 
 
 class Worker:
     def __init__(self):
         app = Flask(__name__)
 
-        app.config.from_object(DevConfig)
+        app.config.from_object(CONFIG)
         db.app = app
         db.init_app(app)
         app_context = app.app_context()
         app_context.push()
 
-        print("=" * 25, f"Starting migrate database on the uri: {DevConfig.SQLALCHEMY_DATABASE_URI}", "=" * 25)
+        print("=" * 25, f"Starting migrate database on the uri: {CONFIG.SQLALCHEMY_DATABASE_URI}", "=" * 25)
         db.drop_all()  # drop all tables
         db.create_all()  # create a new schema
 

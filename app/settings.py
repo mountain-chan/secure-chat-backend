@@ -23,8 +23,8 @@ class ProdConfig(Config):
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
-    # msql
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234567aA@@localhost/chat'
+    # mysql config
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234567aA@@db/secure_chat'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
@@ -42,6 +42,6 @@ class DevConfig(Config):
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
-    # msql
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234567aA@@localhost/chat'
+    # mysql config
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234567aA@@localhost/secure_chat'
     SQLALCHEMY_TRACK_MODIFICATIONS = True

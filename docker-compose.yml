@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+
+#  api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    command: bash -c "python main.py"
+#    ports:
+#      - "5010:5012"
+#    depends_on:
+#      - db
+#    networks:
+#      - chat-net
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "python migrate/init_db.py"
+    depends_on:
+      - db
+    networks:
+      - chat-net
+
+  db:
+    image: mysql:8.0
+    container_name: mysqlCon
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234567aA@
+    volumes:
+      - "db_data:/var/lib/mysql"
+      - "./migrate/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql"
+    networks:
+      - chat-net
+
+volumes:
+  db_data:
+
+networks:
+  chat-net:
+    name: chat-net
