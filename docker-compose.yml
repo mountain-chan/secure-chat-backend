@@ -26,7 +26,7 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: mysqlCon
+    container_name: mysqlSecureChat
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: 1234567aA@
