@@ -64,6 +64,7 @@ class User(db.Model):
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
+    test_message = db.Column(db.String(255), default="test message")
 
     messages = db.relationship('Message', cascade="all,delete")
 
@@ -127,7 +128,7 @@ class Message(db.Model):
     __tablename__ = 'messages'
 
     id = db.Column(db.String(50), primary_key=True)
-    message_hash = db.Column(TEXT)
+    message = db.Column(TEXT)
     sender_id = db.Column(db.ForeignKey('users.id'))
     group_id = db.Column(db.ForeignKey('groups.id'))
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
@@ -135,7 +136,7 @@ class Message(db.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "message_hash": self.message_hash,
+            "message": self.message,
             "sender_id": self.sender_id,
             "group_id": self.group_id,
             "created_date": self.created_date
@@ -147,7 +148,7 @@ class Message(db.Model):
         for o in objects:
             item = {
                 "id": o.id,
-                "message_hash": o.message_hash,
+                "message": o.message,
                 "sender_id": o.sender_id,
                 "group_id": o.group_id,
                 "created_date": o.created_date

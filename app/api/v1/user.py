@@ -36,6 +36,7 @@ def create_user():
         username = json_data.get('username', None).strip()
         password = json_data.get('password', None)
         pub_key = json_data.get('pub_key', None)
+        test_message = json_data.get('test_message', None)
     except Exception as ex:
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
@@ -51,7 +52,7 @@ def create_user():
     _id = str(uuid.uuid1())
     new_values = User(id=_id, username=username, password_hash=hash_password(password),
                       created_date=created_date, is_active=True, force_change_password=True,
-                      pub_key=pub_key, modified_date_password=created_date)
+                      pub_key=pub_key, modified_date_password=created_date, test_message=test_message)
     db.session.add(new_values)
     db.session.commit()
     data = {

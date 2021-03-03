@@ -47,14 +47,14 @@ def chat(group_id):
 
     try:
         json_data = request.get_json()
-        message_hash = json_data.get('message_hash', None).strip()
+        message = json_data.get('message', None).strip()
     except Exception as ex:
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
 
     created_date = get_timestamp_now()
     _id = str(uuid.uuid1())
-    new_values = Message(id=_id, message_hash=message_hash, sender_id=get_jwt_identity(), group_id=group_id,
+    new_values = Message(id=_id, message=message, sender_id=get_jwt_identity(), group_id=group_id,
                          created_date=created_date)
     db.session.add(new_values)
     db.session.commit()

@@ -60,6 +60,7 @@ def login():
         'username': user.username,
         'user_id': user.id,
         'display_name': user.display_name,
+        'test_message': user.test_message,
     }
 
     return send_result(data=data, message="Logged in successfully!")
