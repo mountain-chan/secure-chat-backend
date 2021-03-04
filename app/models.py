@@ -64,7 +64,7 @@ class User(db.Model):
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
-    test_message = db.Column(db.String(255), default="test message")
+    test_message = db.Column(TEXT, default="test message")
 
     messages = db.relationship('Message', cascade="all,delete")
 
@@ -76,9 +76,11 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "display_name": self.display_name,
+            "gender": self.gender,
             "force_change_password": self.force_change_password,
             "created_date": self.created_date,
-            "avatar_path": self.avatar_path
+            "avatar_path": self.avatar_path,
+            "pub_key": self.pub_key
         }
 
     @staticmethod
@@ -89,9 +91,11 @@ class User(db.Model):
                 "id": o.id,
                 "username": o.username,
                 "display_name": o.display_name,
+                "gender": o.gender,
                 "force_change_password": o.force_change_password,
                 "created_date": o.created_date,
-                "avatar_path": o.avatar_path
+                "avatar_path": o.avatar_path,
+                "pub_key": o.pub_key
             }
             items.append(item)
         return items
@@ -212,11 +216,10 @@ class Token(db.Model):
         it was created.
         """
         jti = decoded_token['jti']
-        try:
-            token = Token.query.filter_by(jti=jti).one()
+        token = Token.query.filter_by(jti=jti).first()
+        if token:
             return token.revoked
-        except Exception:
-            return True
+        return True
 
     @staticmethod
     def revoke_token(jti):
