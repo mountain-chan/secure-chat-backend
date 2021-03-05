@@ -128,6 +128,22 @@ class GroupUser(db.Model):
         return cls.query.filter_by(user_id=user_id).first()
 
 
+class Friend(db.Model):
+    __tablename__ = 'friends'
+
+    user_id_1 = db.Column(db.ForeignKey('users.id'), primary_key=True)
+    user_id_2 = db.Column(db.ForeignKey('users.id'), primary_key=True)
+
+    @classmethod
+    def get_friends(cls, user_id):
+        objects = cls.query.filter((Friend.user_id_1 == user_id) | (Friend.user_id_2 == user_id)).all()
+        friends_id = []
+        for obj in objects:
+            friends_id.append(obj.user_id_1) if obj.user_id_1 != user_id else friends_id.append(obj.user_id_2)
+        friends = User.query.filter(User.id.in_(friends_id)).all()
+        return User.many_to_json(friends)
+
+
 class Message(db.Model):
     __tablename__ = 'messages'
 

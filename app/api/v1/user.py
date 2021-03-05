@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
-from app.models import User, Token, GroupUser, Group, Message
+from app.models import User, Token, GroupUser, Group, Message, Friend
 from app.schema.schema_validator import user_validator, password_validator
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
     get_timestamp_now, allowed_file_img
@@ -274,6 +274,68 @@ def get_chats():
     return send_result(data=groups)
 
 
+@api.route('/friends/<string:user_id>', methods=['POST'])
+@jwt_required
+def add_friend(user_id):
+    """ This api for .
+
+        Request Body:
+
+        Returns:
+
+        Examples::
+
+    """
+
+    friend = User.get_by_id(user_id)
+    if not friend:
+        return send_error(message="Not found friend")
+    add_query = Friend(user_id_1=get_jwt_identity(), user_id_2=user_id)
+    db.session.add(add_query)
+    db.session.commit()
+
+    return send_result()
+
+
+@api.route('/friends/<string:user_id>', methods=['DELETE'])
+@jwt_required
+def delete_friend(user_id):
+    """ This api for .
+
+        Request Body:
+
+        Returns:
+
+        Examples::
+
+    """
+    current_user_id = get_jwt_identity()
+    friend = User.get_by_id(user_id)
+    if not friend:
+        return send_error(message="Not found friend")
+    Friend.query.filter_by(user_id_1=current_user_id, user_id_2=user_id).delete()
+    Friend.query.filter_by(user_id_1=user_id, user_id_2=current_user_id).delete()
+    db.session.commit()
+
+    return send_result()
+
+
+@api.route('/friends', methods=['GET'])
+@jwt_required
+def get_friends():
+    """ This api for .
+
+        Request Body:
+
+        Returns:
+
+        Examples::
+
+    """
+    current_user_id = get_jwt_identity()
+    return send_result(data=Friend.get_friends(current_user_id))
+
+
 @api.route('/avatar', methods=['PUT'])
 @jwt_required
 def change_avatar():
@@ -323,6 +385,13 @@ def change_avatar():
 @api.route('/avatar', methods=['DELETE'])
 @jwt_required
 def delete_avatar():
+    """ This api for .
+
+        Returns:
+
+        Examples::
+
+    """
     list_file = os.listdir(AVATAR_PATH)
     for i in list_file:
         if not safe_str_cmp(i, DEFAULT_AVATAR):
