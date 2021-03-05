@@ -3,7 +3,7 @@ user_validator = {
     "properties": {
         "password": {
             "type": "string",
-            "minLength": 3,
+            "minLength": 1,
             "maxLength": 50
         },
         "display_name": {
@@ -25,12 +25,12 @@ password_validator = {
     "properties": {
         "current_password": {
             "type": "string",
-            "minLength": 3,
+            "minLength": 1,
             "maxLength": 50
         },
         "new_password": {
             "type": "string",
-            "minLength": 3,
+            "minLength": 1,
             "maxLength": 50
         }
     },
