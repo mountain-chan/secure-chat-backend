@@ -96,5 +96,5 @@ def delete(message_id):
         Examples::
     """
 
-    Message.query.get(message_id).delete()
+    Message.query.filter_by(id=message_id).delete()
     return send_result()

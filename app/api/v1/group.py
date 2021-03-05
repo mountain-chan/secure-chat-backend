@@ -176,5 +176,5 @@ def delete(group_id):
         Examples::
     """
 
-    Group.query.get(group_id).delete()
+    Group.query.filter_by(id=group_id).delete()
     return send_result()

@@ -190,7 +190,7 @@ def delete_user(user_id):
         Examples::
 
     """
-    User.query.get(user_id).delete()
+    User.query.filter_by(id=user_id).delete()
     # revoke all token of reset user  from database
     Token.revoke_all_token(user_id)
 
