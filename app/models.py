@@ -1,4 +1,6 @@
 # coding: utf-8
+from sqlalchemy import Index
+
 from app.enums import AVATAR_PATH_SEVER, DEFAULT_AVATAR
 from app.extensions import db
 from flask_jwt_extended import decode_token, get_jwt_identity, get_raw_jwt
@@ -14,7 +16,7 @@ class Group(db.Model):
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
-    messages = db.relationship('Message', cascade="all,delete")
+    # messages = db.relationship('GroupMessage', cascade="all,delete")
     group_user = db.relationship('GroupUser', cascade="all,delete")
 
     def to_json(self):
@@ -146,6 +148,57 @@ class Friend(db.Model):
 
 class Message(db.Model):
     __tablename__ = 'messages'
+    __table_args__ = (
+        Index('index_get', 'group_id', 'created_date'),
+    )
+    # TODO oder_by desc filed created_date
+
+    id = db.Column(db.String(50), primary_key=True)
+    message = db.Column(TEXT)
+    sender_id = db.Column(db.ForeignKey('users.id'))
+    group_id = db.Column(db.String(50), nullable=False)
+    created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    seen = db.Column(db.Boolean, default=False)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "message": self.message,
+            "sender_id": self.sender_id,
+            "created_date": self.created_date,
+            "seen": self.seen
+        }
+
+    @staticmethod
+    def many_to_json(objects):
+        items = []
+        for o in objects:
+            item = {
+                "id": o.id,
+                "message": o.message,
+                "sender_id": o.sender_id,
+                "created_date": o.created_date,
+                "seen": o.seen
+            }
+            items.append(item)
+        return items
+
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    @classmethod
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+    @classmethod
+    def get_messages(cls, group_id, page_number=1, page_size=10):
+        return cls.query.filter_by(group_id=group_id).order_by(
+            cls.created_date.desc()).paginate(page=page_number, per_page=page_size).items
+
+
+class GroupMessage(db.Model):
+    __tablename__ = 'group_messages'
 
     id = db.Column(db.String(50), primary_key=True)
     message = db.Column(TEXT)
