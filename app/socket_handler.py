@@ -1,13 +1,18 @@
+import uuid
+
 from flask import request
+from flask_jwt_extended import decode_token
 from flask_socketio import send, emit, join_room, leave_room
 
-from app.extensions import sio
+from app.extensions import sio, db, logger
+from app.models import Message, User
+from app.utils import generate_id, get_timestamp_now
 
 online_users = {}
 
 
 @sio.on('connect')
-def test_connect():
+def connect():
     """
     The connection event handler can return False to reject the connection, or it can also raise ConectionRefusedError
     Returns:
@@ -41,19 +46,22 @@ def disconnect():
             break
 
 
-@sio.on('login')
-def login(username):
+@sio.on('auth')
+def auth(token):
     """
     A user when connect to this socket will have a session ID of the connection which can be obtained from request.sid
     this function will store all users in a dictionary with username and the session ID of the connection
     Args:
-        username:
+        token:
 
     Returns:
 
     """
-    online_users[username] = request.sid
-    print(username + ' Login')
+    decoded_token = decode_token(token)
+    user_id = decoded_token.identity if hasattr(decoded_token, "identity") else "NONE"
+    online_users[request.sid] = user_id
+    print(user_id + ' Login')
+    send(user_id, broadcast=True)
 
 
 @sio.on('message')
@@ -82,9 +90,29 @@ def private_chat(data):
     Returns:
 
     """
-    receiver_session_id = online_users[data['user_id']]
+
+    receiver_id = data["receiver_id"]
     message = data['message']
-    emit('new_private_msg', message, room=receiver_session_id)
+
+    check_receiver = User.get_by_id(receiver_id)
+    if check_receiver is None:
+        logger.error("Not found receiver")
+        return
+
+    created_date = get_timestamp_now()
+    _id = str(uuid.uuid1())
+    current_user_id = online_users[request.sid]
+    group_id = generate_id(current_user_id, receiver_id)
+    new_values = Message(id=_id, message=message, sender_id=current_user_id, group_id=group_id,
+                         created_date=created_date)
+    db.session.add(new_values)
+    db.session.commit()
+
+    receivers_session_id = [key for key, value in online_users.items() if value == receiver_id]
+    data = new_values.to_json()
+
+    for i in receivers_session_id:
+        sio.emit('new_private_msg', data, room=i)
 
 
 @sio.on('chat_group')
