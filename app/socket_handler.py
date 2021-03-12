@@ -58,7 +58,7 @@ def auth(token):
 
     """
     decoded_token = decode_token(token)
-    user_id = decoded_token.identity if hasattr(decoded_token, "identity") else "NONE"
+    user_id = decoded_token["identity"] if "identity" in decoded_token else "NONE"
     online_users[request.sid] = user_id
     print(user_id + ' Login')
     send(user_id, broadcast=True)
