@@ -41,8 +41,8 @@ class Group(db.Model):
         return items
 
     @classmethod
-    def get_all(cls, page_number=1, page_size=10):
-        return cls.query.order_by(cls.created_date).paginate(page=page_number, per_page=page_size).items
+    def get_all(cls, page=1, page_size=10):
+        return cls.query.order_by(cls.created_date).paginate(page=page, per_page=page_size).items
 
     @classmethod
     def get_by_id(cls, _id):
@@ -103,8 +103,8 @@ class User(db.Model):
         return items
 
     @classmethod
-    def get_all(cls, page_number=1, page_size=10):
-        return cls.query.order_by(cls.username).paginate(page=page_number, per_page=page_size).items
+    def get_all(cls, page=1, page_size=10):
+        return cls.query.order_by(cls.username).paginate(page=page, per_page=page_size).items
 
     @classmethod
     def get_current_user(cls):
@@ -133,12 +133,19 @@ class GroupUser(db.Model):
 class Friend(db.Model):
     __tablename__ = 'friends'
 
-    user_id_1 = db.Column(db.ForeignKey('users.id'), primary_key=True)
-    user_id_2 = db.Column(db.ForeignKey('users.id'), primary_key=True)
+    id = db.Column(db.String(50), primary_key=True)
+    user_id_1 = db.Column(db.ForeignKey('users.id'))
+    user_id_2 = db.Column(db.ForeignKey('users.id'))
 
     @classmethod
-    def get_friends(cls, user_id):
-        objects = cls.query.filter((Friend.user_id_1 == user_id) | (Friend.user_id_2 == user_id)).all()
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+    @classmethod
+    def get_friends(cls, user_id, page, page_size):
+        objects = cls.query.filter(
+            (cls.user_id_1 == user_id) |
+            (cls.user_id_2 == user_id)).paginate(page=page, per_page=page_size).items
         friends_id = []
         for obj in objects:
             friends_id.append(obj.user_id_1) if obj.user_id_1 != user_id else friends_id.append(obj.user_id_2)
@@ -192,9 +199,9 @@ class Message(db.Model):
         return cls.query.get(_id)
 
     @classmethod
-    def get_messages(cls, group_id, page_number=1, page_size=10):
+    def get_messages(cls, group_id, page=1, page_size=10):
         return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page_number, per_page=page_size).items
+            cls.created_date.desc()).paginate(page=page, per_page=page_size).items
 
 
 class GroupMessage(db.Model):
@@ -238,9 +245,9 @@ class GroupMessage(db.Model):
         return cls.query.get(_id)
 
     @classmethod
-    def get_messages(cls, group_id, page_number=1, page_size=10):
+    def get_messages(cls, group_id, page=1, page_size=10):
         return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page_number, per_page=page_size).items
+            cls.created_date.desc()).paginate(page=page, per_page=page_size).items
 
 
 class Token(db.Model):

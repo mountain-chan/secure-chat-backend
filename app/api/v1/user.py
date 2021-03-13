@@ -10,8 +10,9 @@ from werkzeug.utils import secure_filename
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
 from app.models import User, Token, GroupUser, Group, Message, Friend
 from app.schema.schema_validator import user_validator, password_validator
+from app.socket_handler import online_users
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
-    get_timestamp_now, allowed_file_img
+    get_timestamp_now, allowed_file_img, generate_id
 from app.extensions import logger, db
 
 api = Blueprint('users', __name__)
@@ -211,7 +212,7 @@ def get_all_users():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
 
-    users = User.get_all(page_number=page, page_size=page_size)
+    users = User.get_all(page=page, page_size=page_size)
     results = User.many_to_json(users)
     return send_result(data=results)
 
@@ -230,7 +231,9 @@ def get_user_by_id(user_id):
     user = User.get_by_id(user_id)
     if not user:
         return send_error(message="User not found.")
-    return send_result(data=user.to_json())
+    user = user.to_json()
+    user["online"] = True if online_users.get(user_id) else False,
+    return send_result(data=user)
 
 
 @api.route('/profile', methods=['GET'])
@@ -263,15 +266,18 @@ def get_chats():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
 
-    items = Group.query.join(GroupUser, GroupUser.group_id == Group.id).filter(
-        GroupUser.user_id == get_jwt_identity()).join(Message, Message.group_id == Group.id).order_by(
-        Message.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
-    groups = Group.many_to_json(items)
-    for group in groups:
-        message = Message.query.filter_by(group_id=group["id"]).order_by(Message.created_date.desc()).first()
-        group["latest_message"] = message.to_json()
+    current_user_id = get_jwt_identity()
 
-    return send_result(data=groups)
+    friends = Friend.get_friends(current_user_id, page=page, page_size=page_size)
+
+    for friend in friends:
+        group_id = generate_id(current_user_id, friend["id"])
+        message = Message.query.filter_by(group_id=group_id).order_by(Message.created_date.desc()).first()
+        friend["latest_message"] = None
+        if message:
+            friend["latest_message"] = message.to_json()
+
+    return send_result(data=friends)
 
 
 @api.route('/friends/<string:user_id>', methods=['POST'])
@@ -290,9 +296,13 @@ def add_friend(user_id):
     friend = User.get_by_id(user_id)
     if not friend:
         return send_error(message="Not found friend")
-    add_query = Friend(user_id_1=get_jwt_identity(), user_id_2=user_id)
-    db.session.add(add_query)
-    db.session.commit()
+    current_user_id = get_jwt_identity()
+    group_id = generate_id(current_user_id, user_id)
+    friend = Friend.get_by_id(group_id)
+    if friend is None:
+        add_query = Friend(id=group_id, user_id_1=current_user_id, user_id_2=user_id)
+        db.session.add(add_query)
+        db.session.commit()
 
     return send_result()
 
@@ -332,8 +342,11 @@ def get_friends():
         Examples::
 
     """
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
+
     current_user_id = get_jwt_identity()
-    return send_result(data=Friend.get_friends(current_user_id))
+    return send_result(data=Friend.get_friends(current_user_id, page=page, page_size=page_size))
 
 
 @api.route('/avatar', methods=['PUT'])

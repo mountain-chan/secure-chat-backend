@@ -3,7 +3,7 @@ import uuid
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import logger, db, sio
-from app.models import Message, User
+from app.models import Message, User, Friend
 from app.socket_handler import online_users
 from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, generate_id
 
@@ -37,6 +37,13 @@ def chat_private(receiver_id):
     _id = str(uuid.uuid1())
     current_user_id = get_jwt_identity()
     group_id = generate_id(current_user_id, receiver_id)
+
+    friend = Friend.get_by_id(group_id)
+    if friend is None:
+        add_query = Friend(id=group_id, user_id_1=get_jwt_identity(), user_id_2=receiver_id)
+        db.session.add(add_query)
+        db.session.commit()
+
     new_values = Message(id=_id, message=message, sender_id=current_user_id, group_id=group_id,
                          created_date=created_date)
     db.session.add(new_values)
@@ -70,21 +77,14 @@ def get(partner_id):
     current_user_id = get_jwt_identity()
     group_id = generate_id(current_user_id, partner_id)
 
-    messages = Message.get_messages(group_id=group_id, page_number=page, page_size=page_size)
+    messages = Message.get_messages(group_id=group_id, page=page, page_size=page_size)
     unseen_messages = [message for message in messages if message.sender_id == partner_id and message.seen is False]
     for msg in unseen_messages:
         msg.seen = True
     db.session.commit()
 
     messages = Message.many_to_json(messages)
-    dt = {
-        "conversation_id": partner_id,
-        "conversation_name": partner.display_name or partner.username,
-        "conversation_avatar": partner.avatar_path,
-        "online": True if online_users.get(partner_id) else False,
-        "messages": messages
-    }
-    return send_result(data=dt)
+    return send_result(data=messages)
 
 
 @api.route('/<string:message_id>', methods=['DELETE'])
