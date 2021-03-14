@@ -42,7 +42,7 @@ class Group(db.Model):
 
     @classmethod
     def get_all(cls, page=1, page_size=10):
-        return cls.query.order_by(cls.created_date).paginate(page=page, per_page=page_size).items
+        return cls.query.order_by(cls.created_date).paginate(page=page, per_page=page_size, error_out=False).items
 
     @classmethod
     def get_by_id(cls, _id):

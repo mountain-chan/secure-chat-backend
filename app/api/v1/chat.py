@@ -50,9 +50,10 @@ def chat_private(receiver_id):
     db.session.commit()
 
     data = new_values.to_json()
-    receiver_session_id = online_users.get(receiver_id)
-    if receiver_session_id:
-        sio.emit('new_private_msg', data, room=receiver_session_id)
+
+    receivers_session_id = [key for key, value in online_users.items() if value == receiver_id]
+    for session_id in receivers_session_id:
+        sio.emit('new_private_msg', data, room=session_id)
 
     return send_result(data=data)
 
