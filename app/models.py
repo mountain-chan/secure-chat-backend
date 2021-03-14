@@ -104,7 +104,7 @@ class User(db.Model):
 
     @classmethod
     def get_all(cls, page=1, page_size=10):
-        return cls.query.order_by(cls.username).paginate(page=page, per_page=page_size).items
+        return cls.query.order_by(cls.username).paginate(page=page, per_page=page_size, error_out=False).items
 
     @classmethod
     def get_current_user(cls):
@@ -145,7 +145,7 @@ class Friend(db.Model):
     def get_friends(cls, user_id, page, page_size):
         objects = cls.query.filter(
             (cls.user_id_1 == user_id) |
-            (cls.user_id_2 == user_id)).paginate(page=page, per_page=page_size).items
+            (cls.user_id_2 == user_id)).paginate(page=page, per_page=page_size, error_out=False).items
         friends_id = []
         for obj in objects:
             friends_id.append(obj.user_id_1) if obj.user_id_1 != user_id else friends_id.append(obj.user_id_2)
@@ -201,7 +201,7 @@ class Message(db.Model):
     @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):
         return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page, per_page=page_size).items
+            cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
 
 
 class GroupMessage(db.Model):
@@ -247,7 +247,7 @@ class GroupMessage(db.Model):
     @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):
         return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page, per_page=page_size).items
+            cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
 
 
 class Token(db.Model):
