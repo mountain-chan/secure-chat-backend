@@ -11,4 +11,4 @@ if __name__ == '__main__':
     Main Application
     python main.py
     """
-    app.run(host='0.0.0.0', port=5012, threaded=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5012, threaded=True, use_reloader=False, ssl_context='adhoc')
