@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('SonarQube analysis') {
             steps {
-                sh 'docker-compose build'
+                sh 'sonar-scanner.bat -D"sonar.projectKey=project3" -D"sonar.sources=." -D"sonar.host.url=http://localhost:9000" -D"sonar.login=52f0e11b270ab48e6deca6caa126e5733ec6a5a7"'
             }
         }
-        stage('Deploy') {
+        stage('Quality Gate 1') {
             steps {
-                sh 'docker-compose up -d'
+                waitForQualityGate abortPipeline: true
             }
         }
     }
