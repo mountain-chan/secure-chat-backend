@@ -1,4 +1,5 @@
 from app.app import create_app
+from app.extensions import sio
 
 from app.settings import DevConfig, ProdConfig, os
 
@@ -11,4 +12,4 @@ if __name__ == '__main__':
     Main Application
     python main.py
     """
-    app.run(host='0.0.0.0', port=5012, threaded=True, use_reloader=False)
+    sio.run(app, host='0.0.0.0', port=5012)
