@@ -10,4 +10,4 @@ AVATAR_PATH = "app/files/avatars/"
 AVATAR_PATH_SEVER = URL_SERVER + "/avatars/"
 DEFAULT_AVATAR = "default_avatar.png"
 
-# test commit 2
+# test push  3
