@@ -1,12 +1,23 @@
 jobs:
   build:
     docker:
-      # using custom image, see .circleci/images/primary/Dockerfile
-      - image: circleci/cci-demo-docker-primary:0.0.2
+      - image: moregreenhouse/tm-base:1.4.0-alpine
+
     steps:
       - checkout
+      - setup_remote_docker
+      - run:
+          name: Does docker even exist
+          command: docker -v
+      - run:
+          name: Install docker-compose
+          command: |
+            set -x
+            curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+            chmod +x /usr/local/bin/docker-compose
 
       - run:
           name: Start Build Project
           command: |
+            set -x
             docker-compose up -d
