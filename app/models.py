@@ -134,21 +134,33 @@ class Friend(db.Model):
     __tablename__ = 'friends'
 
     id = db.Column(db.String(50), primary_key=True)
-    user_id_1 = db.Column(db.ForeignKey('users.id'))
-    user_id_2 = db.Column(db.ForeignKey('users.id'))
+    user_id = db.Column(db.ForeignKey('users.id'))
+    friend_id = db.Column(db.ForeignKey('users.id'))
+    group_id = db.Column(db.String(50), nullable=False)
 
     @classmethod
     def get_by_id(cls, _id):
         return cls.query.get(_id)
 
     @classmethod
+    def check_friend(cls, friend_id):
+        return cls.query.filter_by(user_id=get_jwt_identity(), friend_id=friend_id).first()
+
+    @classmethod
     def get_friends(cls, user_id, page, page_size):
-        objects = cls.query.filter(
-            (cls.user_id_1 == user_id) |
-            (cls.user_id_2 == user_id)).paginate(page=page, per_page=page_size, error_out=False).items
-        friends_id = []
-        for obj in objects:
-            friends_id.append(obj.user_id_1) if obj.user_id_1 != user_id else friends_id.append(obj.user_id_2)
+        objects = cls.query.filter(cls.user_id == user_id).\
+            paginate(page=page, per_page=page_size, error_out=False).items
+        friends_id = [obj.friend_id for obj in objects]
+        friends = User.query.filter(User.id.in_(friends_id)).all()
+        return User.many_to_json(friends)
+
+    @classmethod
+    def get_list_chats(cls, user_id, page, page_size):
+        objects = cls.query.filter(cls.user_id == user_id). \
+            join(Message, Message.group_id == cls.group_id). \
+            order_by(Message.created_date.desc()).\
+            paginate(page=page, per_page=page_size, error_out=False).items
+        friends_id = [obj.friend_id for obj in objects]
         friends = User.query.filter(User.id.in_(friends_id)).all()
         return User.many_to_json(friends)
 

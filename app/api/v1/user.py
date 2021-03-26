@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
-from app.models import User, Token, GroupUser, Group, Message, Friend
+from app.models import User, Token, Message, Friend
 from app.schema.schema_validator import user_validator, password_validator
 from app.socket_handler import online_users
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
@@ -268,21 +268,23 @@ def get_chats():
 
     current_user_id = get_jwt_identity()
 
-    friends = Friend.get_friends(current_user_id, page=page, page_size=page_size)
+    friends = Friend.get_list_chats(current_user_id, page=page, page_size=page_size)
 
     for friend in friends:
         group_id = generate_id(current_user_id, friend["id"])
         message = Message.query.filter_by(group_id=group_id).order_by(Message.created_date.desc()).first()
+        unseen = Message.query.filter_by(sender_id=friend["id"], group_id=group_id, seen=False).count()
         friend["latest_message"] = None
+        friend["unseen"] = unseen
         if message:
             friend["latest_message"] = message.to_json()
 
     return send_result(data=friends)
 
 
-@api.route('/friends/<string:user_id>', methods=['POST'])
+@api.route('/friends/<string:friend_id>', methods=['POST'])
 @jwt_required
-def add_friend(user_id):
+def add_friend(friend_id):
     """ This api for .
 
         Request Body:
@@ -293,15 +295,18 @@ def add_friend(user_id):
 
     """
 
-    friend = User.get_by_id(user_id)
+    friend = User.get_by_id(friend_id)
     if not friend:
         return send_error(message="Not found friend")
     current_user_id = get_jwt_identity()
-    group_id = generate_id(current_user_id, user_id)
-    friend = Friend.get_by_id(group_id)
+
+    friend = Friend.check_friend(friend_id)
     if friend is None:
-        add_query = Friend(id=group_id, user_id_1=current_user_id, user_id_2=user_id)
-        db.session.add(add_query)
+        group_id = generate_id(current_user_id, friend_id)
+        new_obj1 = Friend(id=str(uuid.uuid1()), user_id=current_user_id, friend_id=friend_id, group_id=group_id)
+        new_obj2 = Friend(id=str(uuid.uuid1()), user_id=friend_id, friend_id=current_user_id, group_id=group_id)
+        db.session.add(new_obj1)
+        db.session.add(new_obj2)
         db.session.commit()
 
     return send_result()
@@ -323,8 +328,8 @@ def delete_friend(user_id):
     friend = User.get_by_id(user_id)
     if not friend:
         return send_error(message="Not found friend")
-    Friend.query.filter_by(user_id_1=current_user_id, user_id_2=user_id).delete()
-    Friend.query.filter_by(user_id_1=user_id, user_id_2=current_user_id).delete()
+    Friend.query.filter_by(user_id=current_user_id, friend_id=user_id).delete()
+    Friend.query.filter_by(user_id=user_id, friend_id=current_user_id).delete()
     db.session.commit()
 
     return send_result()

@@ -38,10 +38,12 @@ def chat_private(receiver_id):
     current_user_id = get_jwt_identity()
     group_id = generate_id(current_user_id, receiver_id)
 
-    friend = Friend.get_by_id(group_id)
+    friend = Friend.check_friend(receiver_id)
     if friend is None:
-        add_query = Friend(id=group_id, user_id_1=get_jwt_identity(), user_id_2=receiver_id)
-        db.session.add(add_query)
+        new_obj1 = Friend(id=str(uuid.uuid1()), user_id=current_user_id, friend_id=receiver_id, group_id=group_id)
+        new_obj2 = Friend(id=str(uuid.uuid1()), user_id=receiver_id, friend_id=current_user_id, group_id=group_id)
+        db.session.add(new_obj1)
+        db.session.add(new_obj2)
         db.session.commit()
 
     new_values = Message(id=_id, message=message, sender_id=current_user_id, group_id=group_id,
@@ -79,7 +81,7 @@ def get(partner_id):
     group_id = generate_id(current_user_id, partner_id)
 
     messages = Message.get_messages(group_id=group_id, page=page, page_size=page_size)
-    unseen_messages = [message for message in messages if message.sender_id == partner_id and message.seen is False]
+    unseen_messages = Message.query.filter_by(sender_id=partner_id, group_id=group_id, seen=False).all()
     for msg in unseen_messages:
         msg.seen = True
     db.session.commit()
