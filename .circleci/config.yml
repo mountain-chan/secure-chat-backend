@@ -1,4 +1,15 @@
+version: 2.1
+orbs:
+  sonarcloud: sonarsource/sonarcloud@1.0.0
+
 jobs:
+  sonarqube_analysis:
+    docker:
+      - image: 'circleci/python:3.7.4'
+    steps:
+    - checkout
+    - sonarcloud/scan
+
   build:
     docker:
       - image: moregreenhouse/tm-base:1.4.0-alpine
@@ -21,3 +32,10 @@ jobs:
           command: |
             set -x
             docker-compose up -d
+
+workflows:
+  main:
+    jobs:
+      - sonarqube_analysis:
+          context: SonarCloud
+      - build:
