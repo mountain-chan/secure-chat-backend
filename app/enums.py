@@ -10,4 +10,3 @@ AVATAR_PATH = "app/files/avatars/"
 AVATAR_PATH_SEVER = URL_SERVER + "/avatars/"
 DEFAULT_AVATAR = "default_avatar.png"
 
-# test fdsfsdfs
