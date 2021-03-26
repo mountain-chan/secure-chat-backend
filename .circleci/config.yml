@@ -39,3 +39,5 @@ workflows:
       - sonarqube_analysis:
           context: SonarCloud
       - build:
+          requires:
+            - sonarqube_analysis
