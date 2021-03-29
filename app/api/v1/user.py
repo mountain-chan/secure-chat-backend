@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
-from app.models import User, Token, Message, Friend
+from app.models import User, Token, Message, Friend, UserMessage
 from app.schema.schema_validator import user_validator, password_validator
 from app.socket_handler import online_users
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
@@ -268,18 +268,32 @@ def get_chats():
 
     current_user_id = get_jwt_identity()
 
-    friends = Friend.get_list_chats(current_user_id, page=page, page_size=page_size)
+    friends = Message.get_list_chats()
 
     for friend in friends:
         group_id = generate_id(current_user_id, friend["id"])
-        message = Message.query.filter_by(group_id=group_id).order_by(Message.created_date.desc()).first()
+        message = Message.query.filter_by(group_id=group_id) \
+            .add_columns(UserMessage.message) \
+            .join(UserMessage, Message.id == UserMessage.message_id) \
+            .filter(UserMessage.user_id == current_user_id) \
+            .order_by(Message.created_date.desc()).first()
+
         unseen = Message.query.filter_by(sender_id=friend["id"], group_id=group_id, seen=False).count()
         friend["latest_message"] = None
         friend["unseen"] = unseen
         if message:
-            friend["latest_message"] = message.to_json()
+            friend["latest_message"] = Message.to_json(message)
 
-    return send_result(data=friends)
+    friends_sorted = sorted(friends, key=lambda k: k["latest_message"]["created_date"], reverse=True)
+    st = (page - 1) * page_size
+    end = st + page_size
+    len_list = len(friends_sorted)
+    if end > len_list:
+        end = len_list
+
+    rs = friends_sorted[st:end]
+
+    return send_result(data=rs)
 
 
 @api.route('/friends/<string:friend_id>', methods=['POST'])

@@ -67,8 +67,7 @@ class User(db.Model):
     modified_date_password = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
     test_message = db.Column(TEXT, default="test message")
-
-    messages = db.relationship('Message', cascade="all,delete")
+    is_deleted = db.Column(db.Boolean, default=False)
 
     def get_password_age(self):
         return int((get_timestamp_now() - self.modified_date_password) / 86400)
@@ -104,7 +103,8 @@ class User(db.Model):
 
     @classmethod
     def get_all(cls, page=1, page_size=10):
-        return cls.query.order_by(cls.username).paginate(page=page, per_page=page_size, error_out=False).items
+        return cls.query.filter_by(is_deleted=False).order_by(cls.username)\
+            .paginate(page=page, per_page=page_size, error_out=False).items
 
     @classmethod
     def get_current_user(cls):
@@ -148,17 +148,7 @@ class Friend(db.Model):
 
     @classmethod
     def get_friends(cls, user_id, page, page_size):
-        objects = cls.query.filter(cls.user_id == user_id).\
-            paginate(page=page, per_page=page_size, error_out=False).items
-        friends_id = [obj.friend_id for obj in objects]
-        friends = User.query.filter(User.id.in_(friends_id)).all()
-        return User.many_to_json(friends)
-
-    @classmethod
-    def get_list_chats(cls, user_id, page, page_size):
         objects = cls.query.filter(cls.user_id == user_id). \
-            join(Message, Message.group_id == cls.group_id). \
-            order_by(Message.created_date.desc()).\
             paginate(page=page, per_page=page_size, error_out=False).items
         friends_id = [obj.friend_id for obj in objects]
         friends = User.query.filter(User.id.in_(friends_id)).all()
@@ -173,31 +163,36 @@ class Message(db.Model):
     # TODO oder_by desc filed created_date
 
     id = db.Column(db.String(50), primary_key=True)
-    message = db.Column(TEXT)
     sender_id = db.Column(db.ForeignKey('users.id'))
+    receiver_id = db.Column(db.ForeignKey('users.id'))
     group_id = db.Column(db.String(50), nullable=False)
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     seen = db.Column(db.Boolean, default=False)
 
-    def to_json(self):
+    message_user = db.relationship('UserMessage', cascade="all,delete")
+
+    @staticmethod
+    def to_json(obj):
         return {
-            "id": self.id,
-            "message": self.message,
-            "sender_id": self.sender_id,
-            "created_date": self.created_date,
-            "seen": self.seen
+            "id": obj.Message.id,
+            "message": obj.message,
+            "sender_id": obj.Message.sender_id,
+            "receiver_id": obj.Message.receiver_id,
+            "created_date": obj.Message.created_date,
+            "seen": obj.Message.seen
         }
 
     @staticmethod
     def many_to_json(objects):
         items = []
-        for o in objects:
+        for obj in objects:
             item = {
-                "id": o.id,
-                "message": o.message,
-                "sender_id": o.sender_id,
-                "created_date": o.created_date,
-                "seen": o.seen
+                "id": obj.Message.id,
+                "message": obj.message,
+                "sender_id": obj.Message.sender_id,
+                "receiver_id": obj.Message.receiver_id,
+                "created_date": obj.Message.created_date,
+                "seen": obj.Message.seen
             }
             items.append(item)
         return items
@@ -211,9 +206,65 @@ class Message(db.Model):
         return cls.query.get(_id)
 
     @classmethod
+    def get_list_chats(cls):
+        current_user_id = get_jwt_identity()
+        objects = cls.query.filter((cls.sender_id == current_user_id) | (cls.receiver_id == current_user_id))\
+            .group_by(cls.group_id).all()
+        friends_id = []
+        for obj in objects:
+            friends_id.append(obj.sender_id) if obj.sender_id != current_user_id else friends_id.append(obj.receiver_id)
+        friends = User.query.filter(User.id.in_(friends_id)).all()
+        return User.many_to_json(friends)
+
+    @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):
-        return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
+        return cls.query.filter_by(group_id=group_id) \
+            .add_columns(UserMessage.message) \
+            .join(UserMessage, cls.id == UserMessage.message_id) \
+            .filter(UserMessage.user_id == get_jwt_identity()) \
+            .order_by(cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
+
+
+class UserMessage(db.Model):
+    __tablename__ = 'user_messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(TEXT)
+    user_id = db.Column(db.ForeignKey('users.id'))
+    message_id = db.Column(db.ForeignKey('messages.id'))
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "message": self.message,
+            "user_id": self.user_id,
+            "message_id": self.message_id
+        }
+
+    @staticmethod
+    def many_to_json(objects):
+        items = []
+        for o in objects:
+            item = {
+                "id": o.id,
+                "message": o.message,
+                "user_id": o.user_id,
+                "message_id": o.message_id
+            }
+            items.append(item)
+        return items
+
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    @classmethod
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+    @classmethod
+    def get_message(cls, user_id, message_id):
+        return cls.query.filter_by(user_id=user_id, message_id=message_id).first()
 
 
 class GroupMessage(db.Model):
