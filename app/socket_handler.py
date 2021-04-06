@@ -109,7 +109,7 @@ def private_chat(data):
     db.session.commit()
 
     receivers_session_id = [key for key, value in online_users.items() if value == receiver_id]
-    data = new_values.to_json()
+    data = Message.to_json(new_values)
 
     for i in receivers_session_id:
         sio.emit('new_private_msg', data, room=i)

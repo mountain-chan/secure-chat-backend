@@ -103,7 +103,7 @@ class User(db.Model):
 
     @classmethod
     def get_all(cls, page=1, page_size=10):
-        return cls.query.filter_by(is_deleted=False).order_by(cls.username)\
+        return cls.query.filter_by(is_deleted=False).order_by(cls.username) \
             .paginate(page=page, per_page=page_size, error_out=False).items
 
     @classmethod
@@ -123,7 +123,7 @@ class GroupUser(db.Model):
 
     @classmethod
     def get_by_group_id(cls, group_id):
-        return cls.query.filter_by(group_id=group_id).first()
+        return cls.query.filter_by(group_id=group_id).all()
 
     @classmethod
     def get_by_user_id(cls, user_id):
@@ -208,7 +208,7 @@ class Message(db.Model):
     @classmethod
     def get_list_chats(cls):
         current_user_id = get_jwt_identity()
-        objects = cls.query.filter((cls.sender_id == current_user_id) | (cls.receiver_id == current_user_id))\
+        objects = cls.query.filter((cls.sender_id == current_user_id) | (cls.receiver_id == current_user_id)) \
             .group_by(cls.group_id).all()
         friends_id = []
         for obj in objects:
@@ -271,15 +271,15 @@ class GroupMessage(db.Model):
     __tablename__ = 'group_messages'
 
     id = db.Column(db.String(50), primary_key=True)
-    message = db.Column(TEXT)
     sender_id = db.Column(db.ForeignKey('users.id'))
     group_id = db.Column(db.ForeignKey('groups.id'))
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
+    seen = db.Column(db.Boolean, default=False)
+    message_user = db.relationship('UserMessageGroup', cascade="all,delete")
 
     def to_json(self):
         return {
             "id": self.id,
-            "message": self.message,
             "sender_id": self.sender_id,
             "group_id": self.group_id,
             "created_date": self.created_date
@@ -288,13 +288,14 @@ class GroupMessage(db.Model):
     @staticmethod
     def many_to_json(objects):
         items = []
-        for o in objects:
+        for obj in objects:
             item = {
-                "id": o.id,
-                "message": o.message,
-                "sender_id": o.sender_id,
-                "group_id": o.group_id,
-                "created_date": o.created_date
+                "id": obj.GroupMessage.id,
+                "message": obj.message,
+                "sender_id": obj.GroupMessage.sender_id,
+                "group_id": obj.GroupMessage.group_id,
+                "created_date": obj.GroupMessage.created_date,
+                "seen": obj.GroupMessage.seen
             }
             items.append(item)
         return items
@@ -309,8 +310,53 @@ class GroupMessage(db.Model):
 
     @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):
-        return cls.query.filter_by(group_id=group_id).order_by(
-            cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
+        return cls.query.filter_by(group_id=group_id) \
+            .add_columns(UserMessageGroup.message) \
+            .join(UserMessageGroup, cls.id == UserMessageGroup.message_id) \
+            .filter(UserMessageGroup.user_id == get_jwt_identity()) \
+            .order_by(cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
+
+
+class UserMessageGroup(db.Model):
+    __tablename__ = 'user_messages_group'
+
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(TEXT)
+    user_id = db.Column(db.ForeignKey('users.id'))
+    message_id = db.Column(db.ForeignKey('group_messages.id'))
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "message": self.message,
+            "user_id": self.user_id,
+            "message_id": self.message_id
+        }
+
+    @staticmethod
+    def many_to_json(objects):
+        items = []
+        for o in objects:
+            item = {
+                "id": o.id,
+                "message": o.message,
+                "user_id": o.user_id,
+                "message_id": o.message_id
+            }
+            items.append(item)
+        return items
+
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    @classmethod
+    def get_by_id(cls, _id):
+        return cls.query.get(_id)
+
+    @classmethod
+    def get_message(cls, user_id, message_id):
+        return cls.query.filter_by(user_id=user_id, message_id=message_id).first()
 
 
 class Token(db.Model):
