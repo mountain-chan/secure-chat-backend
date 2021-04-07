@@ -45,18 +45,18 @@ def chat_group(group_id):
     new_values = GroupMessage(id=message_id, sender_id=current_user_id, group_id=group_id, created_date=created_date)
     db.session.add(new_values)
 
+    # insert message to table user_messages_group with this user friend
     for member_id in members_id:
-        new_u_s = UserMessageGroup(message=messages[member_id], user_id=member_id, message_id=message_id)
+        new_u_s = UserMessageGroup(message=messages[member_id], user_id=member_id, message_id=message_id,
+                                   group_id=group_id)
         db.session.add(new_u_s)
 
     db.session.commit()
     data = {
         "id": new_values.id,
         "sender_id": new_values.sender_id,
-        "receiver_id": new_values.receiver_id,
-        "created_date": new_values.created_date,
-        "seen": new_values.seen,
-        "message": messages[current_user_id]
+        "group_id": new_values.group_id,
+        "created_date": new_values.created_date
     }
 
     for member_id in members_id:
@@ -64,7 +64,7 @@ def chat_group(group_id):
         receivers_session_id = [key for key, value in online_users.items() if value == member_id]
         for session_id in receivers_session_id:
             sio.emit('new_private_msg', data, room=session_id)
-
+    data["message"] = messages[current_user_id]
     return send_result(data=data)
 
 
@@ -88,8 +88,9 @@ def get(group_id):
     current_user_id = get_jwt_identity()
 
     messages = GroupMessage.get_messages(group_id=group_id, page=page, page_size=page_size)
-    unseen_messages = GroupMessage.query.filter(GroupMessage.sender_id != current_user_id, group_id=group_id,
-                                                seen=False).all()
+    unseen_messages = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,
+                                                    UserMessageGroup.group_id == group_id,
+                                                    UserMessageGroup.seen == False).all()
     for msg in unseen_messages:
         msg.seen = True
     db.session.commit()
@@ -110,3 +111,61 @@ def delete(message_id):
 
     GroupMessage.query.filter_by(id=message_id).delete()
     return send_result()
+
+
+@api.route('', methods=['GET'])
+@jwt_required
+def get_chats():
+    """ This api for the user get their list chats.
+
+        Returns:
+
+        Examples::
+
+    """
+
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
+
+    current_user_id = get_jwt_identity()
+
+    groups_msg = Group.get_groups_by_user()
+
+    groups_msg = Group.many_to_json(groups_msg)
+
+    for group_msg in groups_msg:
+        message = GroupMessage.query.filter_by(group_id=group_msg["id"]) \
+            .add_columns(UserMessageGroup.message) \
+            .add_columns(UserMessageGroup.seen) \
+            .join(UserMessageGroup, GroupMessage.id == UserMessageGroup.message_id) \
+            .filter(UserMessageGroup.user_id == current_user_id) \
+            .order_by(GroupMessage.created_date.desc()).first()
+
+        unseen = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,
+                                               UserMessageGroup.group_id == group_msg["id"],
+                                               UserMessageGroup.seen == False).count()
+
+        group_msg["latest_message"] = {
+            "id": "1",
+            "sender_id": "",
+            "group_id": "",
+            "created_date": group_msg["created_date"],
+            "message": "",
+            "seen": ""
+        }
+        group_msg["unseen"] = unseen
+        if message:
+            group_msg["latest_message"] = GroupMessage.to_json(message)
+
+    friends_sorted = []
+    if len(groups_msg) > 0:
+        friends_sorted = sorted(groups_msg, key=lambda k: k["latest_message"]["created_date"], reverse=True)
+    st = (page - 1) * page_size
+    end = st + page_size
+    len_list = len(friends_sorted)
+    if end > len_list:
+        end = len_list
+
+    rs = friends_sorted[st:end]
+
+    return send_result(data=rs)

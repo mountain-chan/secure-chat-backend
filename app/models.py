@@ -45,6 +45,13 @@ class Group(db.Model):
         return cls.query.order_by(cls.created_date).paginate(page=page, per_page=page_size, error_out=False).items
 
     @classmethod
+    def get_groups_by_user(cls, page=1, page_size=10):
+        return cls.query.join(GroupUser, GroupUser.group_id == cls.id) \
+            .filter(GroupUser.user_id == get_jwt_identity()) \
+            .order_by(cls.created_date) \
+            .paginate(page=page, per_page=page_size, error_out=False).items
+
+    @classmethod
     def get_by_id(cls, _id):
         return cls.query.get(_id)
 
@@ -274,16 +281,31 @@ class GroupMessage(db.Model):
     sender_id = db.Column(db.ForeignKey('users.id'))
     group_id = db.Column(db.ForeignKey('groups.id'))
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
-    seen = db.Column(db.Boolean, default=False)
     message_user = db.relationship('UserMessageGroup', cascade="all,delete")
 
-    def to_json(self):
+    @staticmethod
+    def to_json(obj):
         return {
-            "id": self.id,
-            "sender_id": self.sender_id,
-            "group_id": self.group_id,
-            "created_date": self.created_date
+            "id": obj.GroupMessage.id,
+            "sender_id": obj.GroupMessage.sender_id,
+            "group_id": obj.GroupMessage.group_id,
+            "created_date": obj.GroupMessage.created_date,
+            "message": obj.message,
+            "seen": obj.seen,
         }
+
+    @staticmethod
+    def many_to_json1(objects):
+        items = []
+        for obj in objects:
+            item = {
+                "id": obj.id,
+                "sender_id": obj.sender_id,
+                "group_id": obj.group_id,
+                "created_date": obj.created_date
+            }
+            items.append(item)
+        return items
 
     @staticmethod
     def many_to_json(objects):
@@ -295,7 +317,7 @@ class GroupMessage(db.Model):
                 "sender_id": obj.GroupMessage.sender_id,
                 "group_id": obj.GroupMessage.group_id,
                 "created_date": obj.GroupMessage.created_date,
-                "seen": obj.GroupMessage.seen
+                "seen": obj.seen
             }
             items.append(item)
         return items
@@ -312,6 +334,7 @@ class GroupMessage(db.Model):
     def get_messages(cls, group_id, page=1, page_size=10):
         return cls.query.filter_by(group_id=group_id) \
             .add_columns(UserMessageGroup.message) \
+            .add_columns(UserMessageGroup.seen) \
             .join(UserMessageGroup, cls.id == UserMessageGroup.message_id) \
             .filter(UserMessageGroup.user_id == get_jwt_identity()) \
             .order_by(cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
@@ -323,7 +346,9 @@ class UserMessageGroup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(TEXT)
     user_id = db.Column(db.ForeignKey('users.id'))
+    group_id = db.Column(db.ForeignKey('groups.id'))
     message_id = db.Column(db.ForeignKey('group_messages.id'))
+    seen = db.Column(db.Boolean, default=False)
 
     def to_json(self):
         return {
@@ -434,7 +459,7 @@ class Token(db.Model):
                 # convert user_id to list user_ids
                 users_identity = [users_identity]
 
-            tokens = Token.query.filter(Token.user_identity.in_(users_identity), Token.revoked is False).all()
+            tokens = Token.query.filter(Token.user_identity.in_(users_identity), Token.revoked == False).all()
 
             for token in tokens:
                 token.revoked = True
@@ -453,7 +478,7 @@ class Token(db.Model):
         """
         jti = get_raw_jwt()['jti']
         try:
-            tokens = Token.query.filter(Token.user_identity == users_identity, Token.revoked is False,
+            tokens = Token.query.filter(Token.user_identity == users_identity, Token.revoked == False,
                                         Token.jti != jti).all()
             for token in tokens:
                 token.revoked = True

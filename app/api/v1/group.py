@@ -137,7 +137,7 @@ def get_all():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
 
-    groups = Group.get_all(page=page, page_size=page_size)
+    groups = Group.get_groups_by_user(page=page, page_size=page_size)
     dt = Group.many_to_json(groups)
 
     return send_result(data=dt)

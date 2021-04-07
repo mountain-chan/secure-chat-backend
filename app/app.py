@@ -91,4 +91,5 @@ def register_blueprints(app):
     app.register_blueprint(api_v1.user.api, url_prefix='/api/v1/users')
     app.register_blueprint(api_v1.chat.api, url_prefix='/api/v1/chats')
     app.register_blueprint(api_v1.group.api, url_prefix='/api/v1/groups')
+    app.register_blueprint(api_v1.group_chat.api, url_prefix='/api/v1/group_chats')
 
