@@ -232,8 +232,34 @@ def get_user_by_id(user_id):
     if not user:
         return send_error(message="User not found.")
     user = user.to_json()
-    user["online"] = True if online_users.get(user_id) else False,
+    user["online"] = True if online_users.get(user_id) else False
     return send_result(data=user)
+
+
+@api.route('/search', methods=['GET'])
+@jwt_required
+def search_user():
+    """ This api get information of a user.
+
+        Returns:
+
+        Examples::
+
+    """
+
+    text_search = request.args.get('text_search', None, type=str)
+    user = User.get_by_id(text_search)
+    if user:
+        user = user.to_json()
+        user["online"] = True if online_users.get(user.id) else False
+        return send_result(data=user)
+
+    text_search = "%{}%".format(text_search)
+    users = User.query.filter((User.username.like(text_search)) | (User.display_name.like(text_search))).all()
+    users = User.many_to_json(users)
+    for u in users:
+        u["online"] = True if online_users.get(u.id) else False
+    return send_result(data=users)
 
 
 @api.route('/profile', methods=['GET'])
