@@ -252,7 +252,7 @@ def search_user():
     if user:
         user = user.to_json()
         user["online"] = True if online_users.get(user["id"]) else False
-        return send_result(data=user)
+        return send_result(data=[user])
 
     text_search = "%{}%".format(text_search)
     users = User.query.filter((User.username.like(text_search)) | (User.display_name.like(text_search))).all()
