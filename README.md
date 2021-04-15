@@ -32,3 +32,8 @@ cd secure-chat-backend
 ```
 docker-compose up --build -d
 ```
+
+# Issue Set mysql mode
+```
+mysql> SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+```
