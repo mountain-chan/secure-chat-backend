@@ -121,7 +121,7 @@ def delete(message_id):
     return send_result()
 
 
-@api.route('/chats', methods=['GET'])
+@api.route('', methods=['GET'])
 @jwt_required
 def get_chats():
     """ This api for the user get their list chats.
@@ -163,3 +163,24 @@ def get_chats():
     rs = friends_sorted[st:end]
 
     return send_result(data=rs)
+
+
+@api.route('/<string:partner_id>/public_keys', methods=['GET'])
+@jwt_required
+def get_public_key(partner_id):
+    """ This api for .
+
+        Returns:
+
+        Examples::
+
+    """
+
+    partner = User.get_by_id(partner_id)
+    if partner is None:
+        return send_error(message="Not found partner")
+
+    users_id = [partner_id, get_jwt_identity()]
+    users = User.query.filter(User.id.in_(users_id)).all()
+    users = User.many_to_json(users)
+    return send_result(data=users)

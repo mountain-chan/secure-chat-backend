@@ -3,7 +3,7 @@ import uuid
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import logger, db, sio
-from app.models import Group, GroupUser, GroupMessage, UserMessageGroup
+from app.models import Group, GroupUser, GroupMessage, UserMessageGroup, User
 from app.socket_handler import online_users
 from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now
 
@@ -169,3 +169,26 @@ def get_chats():
     rs = friends_sorted[st:end]
 
     return send_result(data=rs)
+
+
+@api.route('/<string:group_id>/public_keys', methods=['GET'])
+@jwt_required
+def get_public_key(group_id):
+    """ This api for .
+
+        Returns:
+
+        Examples::
+
+    """
+
+    group = Group.get_by_id(group_id)
+    if group is None:
+        return send_error(message="Not found Error")
+
+    users_group = GroupUser.get_by_group_id(group_id=group_id)
+    users_id = [ug.user_id for ug in users_group]
+
+    users = User.query.filter(User.id.in_(users_id)).all()
+    users = User.many_to_json(users)
+    return send_result(data=users)
