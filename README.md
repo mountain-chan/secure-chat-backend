@@ -1,7 +1,7 @@
 # secure-chat-backend
-API for secure chat application with RSA
+API documents: [https://documenter.getpostman.com/view/9825969/TzJpjL65](https://documenter.getpostman.com/view/9825969/TzJpjL65)
 
-# Manually 
+# Start App Manually 
 ## Installation
 
 - Database: MySQL 8.0.23 [https://dev.mysql.com/downloads/installer/](https://dev.mysql.com/downloads/installer/)
@@ -18,7 +18,7 @@ python main.py
 ```
 
 
-# Docker 
+# Start App with Docker 
 ## Installation
 
 - Get Docker: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
