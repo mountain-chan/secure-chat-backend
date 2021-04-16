@@ -1,7 +1,7 @@
 # Table of Contents
 1. [API documents](#secure-chat-backend)
-2. [Run App Manually](#Run App Manually)
-3. [Run App With Docker](#Run App With Docker)
+2. [Run App Manually](#run-app-manually)
+3. [Run App With Docker](#run-app-with-docker)
 
 # secure-chat-backend
 API documents: [https://documenter.getpostman.com/view/9825969/TzJpjL65](https://documenter.getpostman.com/view/9825969/TzJpjL65)
