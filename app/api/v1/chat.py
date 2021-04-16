@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import logger, db, sio
 from app.models import Message, User, Friend, UserMessage
 from app.socket_handler import online_users
-from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, generate_id
+from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, generate_id, is_user_online
 
 api = Blueprint('chats', __name__)
 
@@ -165,9 +165,9 @@ def get_chats():
     return send_result(data=rs)
 
 
-@api.route('/<string:partner_id>/public_keys', methods=['GET'])
+@api.route('/<string:partner_id>/info', methods=['GET'])
 @jwt_required
-def get_public_key(partner_id):
+def get_info_conversation(partner_id):
     """ This api for .
 
         Returns:
@@ -180,7 +180,15 @@ def get_public_key(partner_id):
     if partner is None:
         return send_error(message="Not found partner")
 
-    users_id = [partner_id, get_jwt_identity()]
-    users = User.query.filter(User.id.in_(users_id)).all()
-    users = User.many_to_json(users)
-    return send_result(data=users)
+    current_user = User.get_current_user()
+
+    public_keys = {partner_id: partner.pub_key, current_user.id: current_user.pub_key}
+    rs = {
+        "conversation_id": partner_id,
+        "conversation_name": partner.display_name or partner.username,
+        "conversation_avatar": partner.avatar_path,
+        "online": is_user_online(partner_id),
+        "public_keys": public_keys
+    }
+
+    return send_result(data=rs)

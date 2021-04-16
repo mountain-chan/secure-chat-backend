@@ -14,7 +14,7 @@ user_validator = {
         "gender": {
             "type": "number",
             "minimum": 0,
-            "maximum": 1,
+            "maximum": 2,
         }
     },
     "required": []

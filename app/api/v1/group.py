@@ -1,11 +1,15 @@
+import os
 import uuid
 
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+from werkzeug.security import safe_str_cmp
+from werkzeug.utils import secure_filename
 
+from app.enums import AVATAR_PATH, DEFAULT_AVATAR, AVATAR_PATH_SEVER
 from app.extensions import logger, db
 from app.models import User, GroupUser, Group
-from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now
+from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, allowed_file_img
 
 api = Blueprint('groups', __name__)
 
@@ -25,7 +29,7 @@ def create_group():
     try:
         json_data = request.get_json()
         users_id = json_data.get('users_id', None)
-        group_name = json_data.get('group_name', "Group Chat")
+        name = json_data.get('name', "Group Chat")
     except Exception as ex:
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
@@ -42,7 +46,7 @@ def create_group():
 
     created_date = get_timestamp_now()
     group_id = str(uuid.uuid1())
-    new_group = Group(id=group_id, group_name=group_name, created_date=created_date)
+    new_group = Group(id=group_id, name=name, created_date=created_date)
     db.session.add(new_group)
     # insert new values to table group_user
     for user_id in users_id:
@@ -74,13 +78,13 @@ def update_group(group_id):
 
     try:
         json_data = request.get_json()
-        group_name = json_data.get('group_name', "Group Chat")
+        name = json_data.get('name', "Group Chat")
     except Exception as ex:
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
 
-    group.group_name = group_name
-    group.modified_date = get_datetime_now()
+    group.name = name
+    group.modified_date = get_timestamp_now()
     db.session.commit()
 
     return send_result()
@@ -178,3 +182,51 @@ def delete(group_id):
 
     Group.query.filter_by(id=group_id).delete()
     return send_result()
+
+
+@api.route('/<string:group_id>/avatar', methods=['PUT'])
+@jwt_required
+def change_avatar(group_id):
+    """
+        Request Body:
+
+        Returns:
+
+        Examples::
+
+    """
+
+    group = Group.get_by_id(group_id)
+    if not group:
+        return send_error(message="Not found error")
+
+    try:
+        image = request.files['image']
+    except Exception as ex:
+        return send_error(message=str(ex))
+
+    if not allowed_file_img(image.filename):
+        return send_error(message="Invalid image file")
+
+    filename = image.filename
+    filename = group.id + filename
+    filename = secure_filename(filename)
+    old_avatar = group.avatar_path.split("/")[-1]
+    if not safe_str_cmp(old_avatar, DEFAULT_AVATAR):
+        list_file = os.listdir(AVATAR_PATH)
+        for i in list_file:
+            if safe_str_cmp(i, old_avatar):
+                os.remove(os.path.join(AVATAR_PATH, i))
+                break
+
+    path = os.path.join(AVATAR_PATH, filename)
+    path_server = os.path.join(AVATAR_PATH_SEVER, filename)
+    try:
+        image.save(path)
+        group.avatar_path = path_server
+        db.session.commit()
+    except Exception as ex:
+        return send_error(message=str(ex))
+
+    return send_result(message="Change avatar successfully")
+

@@ -2,7 +2,7 @@ from time import time
 
 from flask import jsonify
 from app.enums import ALLOWED_EXTENSIONS_IMG
-from .extensions import parser
+from .extensions import parser, online_users
 import datetime
 import werkzeug
 from marshmallow import fields, validate as validate_
@@ -175,6 +175,23 @@ def get_timestamp_now():
             current time in timestamp
     """
     return int(time())
+
+
+def is_user_online(user_id):
+    """
+        Returns:
+            True if current user is online
+    """
+    if type(user_id) is list:
+        for session_id, _user_id in online_users.items():
+            if _user_id in user_id:
+                return True
+        return False
+
+    for session_id, _user_id in online_users.items():
+        if _user_id == user_id:
+            return True
+    return False
 
 
 mapping_char_to_number = {**{chr(i): i - 48 for i in range(48, 58)},

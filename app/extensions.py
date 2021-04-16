@@ -16,6 +16,9 @@ jwt = JWTManager()
 db = SQLAlchemy()
 ma = Marshmallow()
 
+# list user online
+online_users = {}
+
 # init flask_socket io
 sio = SocketIO(debug=False, log_output=False, cors_allowed_origins="*")
 

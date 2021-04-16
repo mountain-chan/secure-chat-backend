@@ -4,11 +4,9 @@ from flask import request
 from flask_jwt_extended import decode_token
 from flask_socketio import send, emit, join_room, leave_room
 
-from app.extensions import sio, db, logger
+from app.extensions import sio, db, logger, online_users
 from app.models import Message, User
 from app.utils import generate_id, get_timestamp_now
-
-online_users = {}
 
 
 @sio.on('connect')
@@ -40,10 +38,7 @@ def disconnect():
     """
     session_id = request.sid
     print('[DISCONNECTED] ', session_id)
-    for key, value in online_users.items():
-        if value == session_id:
-            online_users.pop(key, 'No Key found')
-            break
+    online_users.pop(session_id, 'No Key found')
 
 
 @sio.on('auth')

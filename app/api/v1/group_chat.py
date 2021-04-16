@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import logger, db, sio
 from app.models import Group, GroupUser, GroupMessage, UserMessageGroup, User
 from app.socket_handler import online_users
-from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now
+from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, is_user_online
 
 api = Blueprint('group_chats', __name__)
 
@@ -171,9 +171,9 @@ def get_chats():
     return send_result(data=rs)
 
 
-@api.route('/<string:group_id>/public_keys', methods=['GET'])
+@api.route('/<string:group_id>/info', methods=['GET'])
 @jwt_required
-def get_public_key(group_id):
+def get_info_conversation(group_id):
     """ This api for .
 
         Returns:
@@ -190,5 +190,16 @@ def get_public_key(group_id):
     users_id = [ug.user_id for ug in users_group]
 
     users = User.query.filter(User.id.in_(users_id)).all()
-    users = User.many_to_json(users)
-    return send_result(data=users)
+
+    public_keys = {}
+    for user in users:
+        public_keys[user.id] = user.pub_key
+    rs = {
+        "conversation_id": group_id,
+        "conversation_name": group.name,
+        "conversation_avatar": group.avatar_path,
+        "online": is_user_online(users_id),
+        "public_keys": public_keys
+    }
+
+    return send_result(data=rs)

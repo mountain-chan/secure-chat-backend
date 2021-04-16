@@ -12,7 +12,8 @@ class Group(db.Model):
     __tablename__ = 'groups'
 
     id = db.Column(db.String(50), primary_key=True)
-    group_name = db.Column(db.String(100), default="Group Chat")
+    name = db.Column(db.String(100), default="Group Chat")
+    avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
@@ -22,7 +23,8 @@ class Group(db.Model):
     def to_json(self):
         return {
             "id": self.id,
-            "group_name": self.group_name,
+            "name": self.name,
+            "avatar_path": self.avatar_path,
             "created_date": self.created_date,
             "modified_date": self.modified_date
         }
@@ -33,7 +35,8 @@ class Group(db.Model):
         for o in objects:
             item = {
                 "id": o.id,
-                "group_name": o.group_name,
+                "name": o.name,
+                "avatar_path": o.avatar_path,
                 "created_date": o.created_date,
                 "modified_date": o.modified_date
             }

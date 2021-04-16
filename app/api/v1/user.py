@@ -8,11 +8,10 @@ from werkzeug.security import check_password_hash, safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
-from app.models import User, Token, Message, Friend, UserMessage
+from app.models import User, Token, Friend
 from app.schema.schema_validator import user_validator, password_validator
-from app.socket_handler import online_users
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
-    get_timestamp_now, allowed_file_img, generate_id
+    get_timestamp_now, allowed_file_img, generate_id, is_user_online
 from app.extensions import logger, db
 
 api = Blueprint('users', __name__)
@@ -88,12 +87,13 @@ def update_user(user_id):
     except Exception as ex:
         return send_error(message=str(ex))
 
-    keys = ["display_name", "gender"]
+    keys = ["display_name", "gender", "pub_key", "is_active", "address", "login_failed_attempts",
+            "force_change_password", "test_message"]
     data = {}
     for key in keys:
         if key in json_data:
             data[key] = json_data.get(key)
-            setattr(user, key, json_data.get(key).strip())
+            setattr(user, key, json_data.get(key))
 
     user.modified_date = get_timestamp_now()
     db.session.commit()
@@ -126,12 +126,13 @@ def update_info():
     except Exception as ex:
         return send_error(message=str(ex))
 
-    keys = ["display_name", "gender"]
+    keys = ["display_name", "gender", "pub_key", "is_active", "address", "login_failed_attempts",
+            "force_change_password", "test_message"]
     data = {}
     for key in keys:
         if key in json_data:
             data[key] = json_data.get(key)
-            setattr(current_user, key, json_data.get(key).strip())
+            setattr(current_user, key, json_data.get(key))
 
     current_user.modified_date = get_timestamp_now()
     db.session.commit()
@@ -232,7 +233,7 @@ def get_user_by_id(user_id):
     if not user:
         return send_error(message="User not found.")
     user = user.to_json()
-    user["online"] = True if online_users.get(user_id) else False
+    user["online"] = is_user_online(user["id"])
     return send_result(data=user)
 
 
@@ -251,14 +252,14 @@ def search_user():
     user = User.get_by_id(text_search)
     if user:
         user = user.to_json()
-        user["online"] = True if online_users.get(user["id"]) else False
+        user["online"] = is_user_online(user["id"])
         return send_result(data=[user])
 
     text_search = "%{}%".format(text_search)
     users = User.query.filter((User.username.like(text_search)) | (User.display_name.like(text_search))).all()
     users = User.many_to_json(users)
     for u in users:
-        u["online"] = True if online_users.get(u["id"]) else False
+        u["online"] = is_user_online(u["id"])
     return send_result(data=users)
 
 
@@ -276,50 +277,6 @@ def get_profile():
     current_user = User.get_current_user()
 
     return send_result(data=current_user.to_json())
-
-
-@api.route('/chats', methods=['GET'])
-@jwt_required
-def get_chats():
-    """ This api for the user get their list chats.
-
-        Returns:
-
-        Examples::
-
-    """
-
-    page = request.args.get('page', 1, type=int)
-    page_size = request.args.get('page_size', 10, type=int)
-
-    current_user_id = get_jwt_identity()
-
-    friends = Message.get_list_chats()
-
-    for friend in friends:
-        group_id = generate_id(current_user_id, friend["id"])
-        message = Message.query.filter_by(group_id=group_id) \
-            .add_columns(UserMessage.message) \
-            .join(UserMessage, Message.id == UserMessage.message_id) \
-            .filter(UserMessage.user_id == current_user_id) \
-            .order_by(Message.created_date.desc()).first()
-
-        unseen = Message.query.filter_by(sender_id=friend["id"], group_id=group_id, seen=False).count()
-        friend["latest_message"] = None
-        friend["unseen"] = unseen
-        if message:
-            friend["latest_message"] = Message.to_json(message)
-
-    friends_sorted = sorted(friends, key=lambda k: k["latest_message"]["created_date"], reverse=True)
-    st = (page - 1) * page_size
-    end = st + page_size
-    len_list = len(friends_sorted)
-    if end > len_list:
-        end = len_list
-
-    rs = friends_sorted[st:end]
-
-    return send_result(data=rs)
 
 
 @api.route('/friends/<string:friend_id>', methods=['POST'])
