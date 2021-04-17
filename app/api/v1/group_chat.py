@@ -63,7 +63,7 @@ def chat_group(group_id):
         data["message"] = messages[member_id]
         receivers_session_id = [key for key, value in online_users.items() if value == member_id]
         for session_id in receivers_session_id:
-            sio.emit('new_private_msg', data, room=session_id)
+            sio.emit('new_group_msg', data, room=session_id)
     data["message"] = messages[current_user_id]
     return send_result(data=data)
 

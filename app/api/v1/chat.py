@@ -74,6 +74,7 @@ def chat_private(receiver_id):
     for session_id in receivers_session_id:
         sio.emit('new_private_msg', data, room=session_id)
 
+    data["message"] = messages[current_user_id]
     return send_result(data=data)
 
 
