@@ -435,10 +435,10 @@ def unseen_conversations():
     unseen_group = []
 
     for friend in friends:
-        group_id = generate_id(current_user_id, friend.id)
-        unseen = Message.query.filter_by(sender_id=friend.id, group_id=group_id, seen=False).count()
+        group_id = generate_id(current_user_id, friend.friend_id)
+        unseen = Message.query.filter_by(sender_id=friend.friend_id, group_id=group_id, seen=False).count()
         if unseen > 0:
-            unseen_private.append(friend.id)
+            unseen_private.append(friend.friend_id)
 
     for group in groups:
         unseen = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,
