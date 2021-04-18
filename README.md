@@ -1,8 +1,8 @@
 # Table of Contents
 1. [Frontend](#frontend)
-1. [API documents](#secure-chat-backend)
-2. [Run App Manually](#run-app-manually)
-3. [Run App With Docker](#run-app-with-docker)
+2. [API documents](#secure-chat-backend)
+3. [Run App Manually](#run-app-manually)
+4. [Run App With Docker](#run-app-with-docker)
 
 # Frontend
 * Link: [https://github.com/WHKnightZ/RN-Secure-Chat](https://github.com/WHKnightZ/RN-Secure-Chat)
