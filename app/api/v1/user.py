@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_AVATAR
-from app.models import User, Token, Friend
+from app.models import User, Token, Friend, Message, Group, GroupUser, UserMessageGroup
 from app.schema.schema_validator import user_validator, password_validator
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
     get_timestamp_now, allowed_file_img, generate_id, is_user_online
@@ -412,3 +412,41 @@ def delete_avatar():
         if not safe_str_cmp(i, DEFAULT_AVATAR):
             os.remove(os.path.join(AVATAR_PATH, i))
     return send_result()
+
+
+@api.route('/unseen_conversations', methods=['GET'])
+@jwt_required
+def unseen_conversations():
+    """ This api for .
+
+        Returns:
+
+        Examples::
+
+    """
+
+    current_user_id = get_jwt_identity()
+
+    friends = Friend.query.filter_by(user_id=current_user_id).all()
+    groups = Group.query.join(GroupUser, GroupUser.group_id == Group.id)\
+        .filter(GroupUser.user_id == get_jwt_identity()).all()
+
+    unseen_private = []
+    unseen_group = []
+
+    for friend in friends:
+        group_id = generate_id(current_user_id, friend.id)
+        unseen = Message.query.filter_by(sender_id=friend.id, group_id=group_id, seen=False).count()
+        if unseen > 0:
+            unseen_private.append(friend.id)
+
+    for group in groups:
+        unseen = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,
+                                               UserMessageGroup.group_id == group.id,
+                                               UserMessageGroup.seen == False).count()
+        if unseen > 0:
+            unseen_group.append(group.id)
+
+    rs = {"unseen_private": unseen_private, "unseen_group": unseen_group}
+
+    return send_result(data=rs)
