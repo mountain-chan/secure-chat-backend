@@ -1,6 +1,8 @@
 from time import time
 
 from flask import jsonify
+from flask_jwt_extended import get_jwt_identity
+
 from app.enums import ALLOWED_EXTENSIONS_IMG
 from .extensions import parser, online_users
 import datetime
@@ -183,6 +185,7 @@ def is_user_online(user_id):
             True if current user is online
     """
     if type(user_id) is list:
+        user_id.remove(get_jwt_identity())
         for session_id, _user_id in online_users.items():
             if _user_id in user_id:
                 return True
