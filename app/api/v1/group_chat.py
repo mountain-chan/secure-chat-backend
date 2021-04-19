@@ -192,14 +192,17 @@ def get_info_conversation(group_id):
     users = User.query.filter(User.id.in_(users_id)).all()
 
     public_keys = {}
+    avatars_path = {}
     for user in users:
         public_keys[user.id] = user.pub_key
+        avatars_path[user.id] = user.avatar_path
     rs = {
         "conversation_id": group_id,
         "conversation_name": group.name,
         "conversation_avatar": group.avatar_path,
         "online": is_user_online(users_id),
-        "public_keys": public_keys
+        "public_keys": public_keys,
+        "avatars_path": avatars_path
     }
 
     return send_result(data=rs)

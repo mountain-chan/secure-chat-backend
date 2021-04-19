@@ -7,7 +7,7 @@ from werkzeug.security import safe_str_cmp
 from werkzeug.utils import secure_filename
 
 from app.enums import AVATAR_PATH, DEFAULT_AVATAR, AVATAR_PATH_SEVER
-from app.extensions import logger, db
+from app.extensions import logger, db, sio
 from app.models import User, GroupUser, Group
 from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, allowed_file_img
 
@@ -54,6 +54,8 @@ def create_group():
         if user:
             new_obj = GroupUser(user_id=user_id, group_id=group_id)
             db.session.add(new_obj)
+            data = {'username': user.username, 'room': group_id}
+            sio.emit('join', data)
 
     db.session.commit()
 
@@ -113,15 +115,23 @@ def update_member(group_id):
         logger.error('{} Parameters error: '.format(get_datetime_now().strftime('%Y-%b-%d %H:%M:%S')) + str(ex))
         return send_error(message="Parameters error: " + str(ex))
 
+    user = User.get_by_id(user_id)
+    if user is None:
+        return send_error(message="Not found user error!")
+
     check = GroupUser.query.filter_by(user_id=user_id, group_id=group_id).first()
     if status == "add" and check is None:
         new_obj = GroupUser(user_id=user_id, group_id=group_id)
         db.session.add(new_obj)
         db.session.commit()
+        data = {'username': user.username, 'room': group_id}
+        sio.emit('join', data)
         return send_result()
 
     GroupUser.query.filter_by(user_id=user_id, group_id=group_id).delete()
     db.session.commit()
+    data = {'username': user.username, 'room': group_id}
+    sio.emit('leave', data)
 
     return send_result()
 
@@ -229,4 +239,3 @@ def change_avatar(group_id):
         return send_error(message=str(ex))
 
     return send_result(message="Change avatar successfully")
-

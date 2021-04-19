@@ -139,7 +139,8 @@ def on_join(data):
     username = data['username']
     room = data['room']
     join_room(room)
-    emit('msg_room', username + ' has entered the room.' + room.upper(), room=room)
+    msg = username + ' đã tham gia cuộc trò chuyện này.'
+    emit('msg_room', msg, room=room)
 
 
 @sio.on('leave')
@@ -155,7 +156,8 @@ def on_leave(data):
     username = data['username']
     room = data['room']
     leave_room(room)
-    emit('msg_room', username + ' has left the room ' + room.upper(), room=room)
+    msg = username + ' đã rời khỏi cuộc trò chuyện này.'
+    emit('msg_room', msg, room=room)
 
 
 @sio.on('join2', namespace='/message2')

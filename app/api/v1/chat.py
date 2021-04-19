@@ -184,12 +184,14 @@ def get_info_conversation(partner_id):
     current_user = User.get_current_user()
 
     public_keys = {partner_id: partner.pub_key, current_user.id: current_user.pub_key}
+    avatars_path = {partner_id: partner.avatar_path, current_user.id: current_user.avatar_path}
     rs = {
         "conversation_id": partner_id,
         "conversation_name": partner.display_name or partner.username,
         "conversation_avatar": partner.avatar_path,
         "online": is_user_online(partner_id),
-        "public_keys": public_keys
+        "public_keys": public_keys,
+        "avatars_path": avatars_path
     }
 
     return send_result(data=rs)
