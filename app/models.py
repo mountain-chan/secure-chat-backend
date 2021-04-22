@@ -1,7 +1,7 @@
 # coding: utf-8
 from sqlalchemy import Index
 
-from app.enums import AVATAR_PATH_SEVER, DEFAULT_AVATAR
+from app.enums import AVATAR_PATH_SEVER, DEFAULT_AVATAR, DEFAULT_GROUP_AVATAR
 from app.extensions import db
 from flask_jwt_extended import decode_token, get_jwt_identity, get_raw_jwt
 from sqlalchemy.dialects.mysql import INTEGER, TEXT
@@ -13,7 +13,7 @@ class Group(db.Model):
 
     id = db.Column(db.String(50), primary_key=True)
     name = db.Column(db.String(100), default="Group Chat")
-    avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_AVATAR)
+    avatar_path = db.Column(db.String(255), default=AVATAR_PATH_SEVER + DEFAULT_GROUP_AVATAR)
     created_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
     modified_date = db.Column(INTEGER(unsigned=True), default=get_timestamp_now())
 
