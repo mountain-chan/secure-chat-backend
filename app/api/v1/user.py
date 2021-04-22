@@ -1,4 +1,5 @@
 import os
+import random
 import uuid
 
 from flask import Blueprint, request
@@ -50,9 +51,12 @@ def create_user():
 
     created_date = get_timestamp_now()
     _id = str(uuid.uuid1())
+    index_avatar = "_" + str(random.randint(1, 10)) + "."
+    avatar_path = AVATAR_PATH_SEVER + DEFAULT_AVATAR.replace(".", index_avatar)
     new_values = User(id=_id, username=username, password_hash=hash_password(password),
                       created_date=created_date, is_active=True, force_change_password=True,
-                      pub_key=pub_key, modified_date_password=created_date, test_message=test_message)
+                      pub_key=pub_key, modified_date_password=created_date, test_message=test_message,
+                      avatar_path=avatar_path)
     db.session.add(new_values)
     db.session.commit()
     data = {
@@ -428,7 +432,7 @@ def unseen_conversations():
     current_user_id = get_jwt_identity()
 
     friends = Friend.query.filter_by(user_id=current_user_id).all()
-    groups = Group.query.join(GroupUser, GroupUser.group_id == Group.id)\
+    groups = Group.query.join(GroupUser, GroupUser.group_id == Group.id) \
         .filter(GroupUser.user_id == get_jwt_identity()).all()
 
     unseen_private = []

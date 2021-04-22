@@ -66,7 +66,7 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     pub_key = db.Column(TEXT, nullable=False)
-    gender = db.Column(db.Boolean, default=0)
+    gender = db.Column(db.Boolean, default=1)
     display_name = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
     address = db.Column(db.String(255))
