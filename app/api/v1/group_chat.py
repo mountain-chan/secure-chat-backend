@@ -194,7 +194,7 @@ def get_info_conversation(group_id):
     users_info = {}
     for user in users:
         info = {
-            "public_key": user.public_key,
+            "public_key": user.pub_key,
             "avatar_path": user.avatar_path
         }
         users_info[user.id] = info
