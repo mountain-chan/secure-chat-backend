@@ -382,12 +382,11 @@ def change_avatar():
     filename = user.id + filename
     filename = secure_filename(filename)
     old_avatar = user.avatar_path.split("/")[-1]
-    if not safe_str_cmp(old_avatar, DEFAULT_AVATAR):
-        list_file = os.listdir(AVATAR_PATH)
-        for i in list_file:
-            if safe_str_cmp(i, old_avatar):
-                os.remove(os.path.join(AVATAR_PATH, i))
-                break
+    if old_avatar.find("default_avatar", 0, 14) != -1:
+        try:
+            os.remove(os.path.join(AVATAR_PATH, old_avatar))
+        except Exception as ex:
+            return send_error(message=str(ex))
 
     path = os.path.join(AVATAR_PATH, filename)
     path_server = os.path.join(AVATAR_PATH_SEVER, filename)
