@@ -59,6 +59,24 @@ def auth(token):
     send(user_id, broadcast=True)
 
 
+@sio.on('typing')
+def typing(user_id):
+    """
+    Args:
+        user_id:
+
+    Returns:
+
+    """
+    receivers_session_id = [key for key, value in online_users.items() if value == user_id]
+    current_user_id = online_users.get(request.sid)
+    data = {
+        user_id: current_user_id
+    }
+    for session_id in receivers_session_id:
+        sio.emit('typing', data, room=session_id)
+
+
 @sio.on('message')
 def handle_message(msg):
     """
