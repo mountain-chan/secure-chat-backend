@@ -40,7 +40,10 @@ def disconnect():
     print('[DISCONNECTED] ', session_id)
     current_user_id = online_users.get(session_id)
     sio.emit('offline', current_user_id, broadcast=True)
-    online_users.pop(session_id, 'No Key found')
+    sessions_id = [key for key, value in online_users.items() if value == current_user_id]
+    sessions_id.append(session_id)
+    for sd in sessions_id:
+        online_users.pop(sd, 'No Key found')
 
 
 @sio.on('auth')
