@@ -13,7 +13,7 @@ from app.models import User, Token, Friend, Message, Group, GroupUser, UserMessa
 from app.schema.schema_validator import user_validator, password_validator
 from app.utils import send_result, send_error, hash_password, get_datetime_now, is_password_contain_space, \
     get_timestamp_now, allowed_file_img, generate_id, is_user_online
-from app.extensions import logger, db
+from app.extensions import logger, db, online_users
 
 api = Blueprint('users', __name__)
 
@@ -220,6 +220,22 @@ def get_all_users():
     users = User.get_all(page=page, page_size=page_size)
     results = User.many_to_json(users)
     return send_result(data=results)
+
+
+@api.route('/online_users', methods=['GET'])
+@jwt_required
+def get_online_users():
+    """ This api gets all users.
+
+        Returns:
+
+        Examples::
+
+    """
+
+    rs = [value for key, value in online_users.items()]
+
+    return send_result(data=rs)
 
 
 @api.route('/<user_id>', methods=['GET'])

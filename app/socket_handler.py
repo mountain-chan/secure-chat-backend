@@ -39,6 +39,8 @@ def disconnect():
     session_id = request.sid
     print('[DISCONNECTED] ', session_id)
     online_users.pop(session_id, 'No Key found')
+    current_user_id = online_users.get(request.sid)
+    sio.emit('offline', current_user_id, broadcast=True)
 
 
 @sio.on('auth')
@@ -56,22 +58,23 @@ def auth(token):
     user_id = decoded_token["identity"] if "identity" in decoded_token else "NONE"
     online_users[request.sid] = user_id
     print(user_id + ' Login')
-    send(user_id, broadcast=True)
+    sio.emit('online', user_id, broadcast=True)
 
 
 @sio.on('typing')
-def typing(user_id):
+def typing(payload):
     """
     Args:
-        user_id:
+        payload:
 
     Returns:
 
     """
-    receivers_session_id = [key for key, value in online_users.items() if value == user_id]
+    receivers_session_id = [key for key, value in online_users.items() if value == payload.get('user_id', None)]
     current_user_id = online_users.get(request.sid)
     data = {
-        user_id: current_user_id
+        "user_id": current_user_id,
+        "conversation_id": payload.get('conversation_id', None)
     }
     for session_id in receivers_session_id:
         sio.emit('typing', data, room=session_id)
