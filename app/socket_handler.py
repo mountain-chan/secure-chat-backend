@@ -38,9 +38,9 @@ def disconnect():
     """
     session_id = request.sid
     print('[DISCONNECTED] ', session_id)
-    online_users.pop(session_id, 'No Key found')
-    current_user_id = online_users.get(request.sid)
+    current_user_id = online_users.get(session_id)
     sio.emit('offline', current_user_id, broadcast=True)
+    online_users.pop(session_id, 'No Key found')
 
 
 @sio.on('auth')
