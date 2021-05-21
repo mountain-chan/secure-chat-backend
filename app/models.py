@@ -124,6 +124,19 @@ class User(db.Model):
     def get_by_id(cls, _id):
         return cls.query.get(_id)
 
+    @classmethod
+    def get_all_friends(cls):
+        current_user_id = get_jwt_identity()
+        friends = cls.query.join(Friend, cls.id == Friend.friend_id).filter(Friend.user_id == current_user_id).all()
+        return cls.many_to_json(friends)
+
+    @classmethod
+    def get_friends(cls, page, page_size):
+        current_user_id = get_jwt_identity()
+        friends = cls.query.join(Friend, cls.id == Friend.friend_id).filter(Friend.user_id == current_user_id) \
+            .paginate(page=page, per_page=page_size, error_out=False).items
+        return cls.many_to_json(friends)
+
 
 class GroupUser(db.Model):
     __tablename__ = 'group_user'
@@ -155,14 +168,6 @@ class Friend(db.Model):
     @classmethod
     def check_friend(cls, friend_id):
         return cls.query.filter_by(user_id=get_jwt_identity(), friend_id=friend_id).first()
-
-    @classmethod
-    def get_friends(cls, user_id, page, page_size):
-        objects = cls.query.filter(cls.user_id == user_id). \
-            paginate(page=page, per_page=page_size, error_out=False).items
-        friends_id = [obj.friend_id for obj in objects]
-        friends = User.query.filter(User.id.in_(friends_id)).all()
-        return User.many_to_json(friends)
 
 
 class Message(db.Model):
@@ -214,17 +219,6 @@ class Message(db.Model):
     @classmethod
     def get_by_id(cls, _id):
         return cls.query.get(_id)
-
-    @classmethod
-    def get_list_chats(cls):
-        current_user_id = get_jwt_identity()
-        objects = cls.query.filter((cls.sender_id == current_user_id) | (cls.receiver_id == current_user_id)) \
-            .group_by(cls.group_id).all()
-        friends_id = []
-        for obj in objects:
-            friends_id.append(obj.sender_id) if obj.sender_id != current_user_id else friends_id.append(obj.receiver_id)
-        friends = User.query.filter(User.id.in_(friends_id)).all()
-        return User.many_to_json(friends)
 
     @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):

@@ -351,8 +351,7 @@ def get_friends():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
 
-    current_user_id = get_jwt_identity()
-    return send_result(data=Friend.get_friends(current_user_id, page=page, page_size=page_size))
+    return send_result(data=User.get_friends(page=page, page_size=page_size))
 
 
 @api.route('/avatar', methods=['PUT'])

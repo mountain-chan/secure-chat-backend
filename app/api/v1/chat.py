@@ -138,7 +138,7 @@ def get_chats():
 
     current_user_id = get_jwt_identity()
 
-    friends = Message.get_list_chats()
+    friends = User.get_all_friends()
 
     for friend in friends:
         group_id = generate_id(current_user_id, friend["id"])
@@ -154,14 +154,16 @@ def get_chats():
         if message:
             friend["latest_message"] = Message.to_json(message)
 
-    friends_sorted = sorted(friends, key=lambda k: k["latest_message"]["created_date"], reverse=True)
+    list_chats = [friend for friend in friends if friend["latest_message"]]
+
+    list_chats_sorted = sorted(list_chats, key=lambda k: k["latest_message"]["created_date"], reverse=True)
     st = (page - 1) * page_size
     end = st + page_size
-    len_list = len(friends_sorted)
+    len_list = len(list_chats_sorted)
     if end > len_list:
         end = len_list
 
-    rs = friends_sorted[st:end]
+    rs = list_chats_sorted[st:end]
 
     return send_result(data=rs)
 
