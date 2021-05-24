@@ -5,7 +5,7 @@ from flask_jwt_extended import decode_token
 from flask_socketio import send, emit, join_room, leave_room
 
 from app.extensions import sio, db, logger, online_users
-from app.models import Message, User
+from app.models import Message, User, Group, GroupUser
 from app.utils import generate_id, get_timestamp_now
 
 
@@ -42,8 +42,8 @@ def disconnect():
     sio.emit('offline', current_user_id, broadcast=True)
     sessions_id = [key for key, value in online_users.items() if value == current_user_id]
     sessions_id.append(session_id)
-    for sd in sessions_id:
-        online_users.pop(sd, 'No Key found')
+    for si in sessions_id:
+        online_users.pop(si, 'No Key found')
 
 
 @sio.on('auth')
@@ -64,23 +64,60 @@ def auth(token):
     sio.emit('online', user_id, broadcast=True)
 
 
-@sio.on('typing')
-def typing(payload):
+@sio.on('typing_start')
+def typing(conversation_id):
     """
     Args:
-        payload:
+        conversation_id:
 
     Returns:
 
     """
-    receivers_session_id = [key for key, value in online_users.items() if value == payload.get('user_id', None)]
+
+    check_group = Group.get_by_id(conversation_id)
+    members_id = [conversation_id]
+    if check_group:
+        members = GroupUser.get_by_group_id(conversation_id)
+        members_id = [m.user_id for m in members]
+
     current_user_id = online_users.get(request.sid)
     data = {
         "user_id": current_user_id,
-        "conversation_id": payload.get('conversation_id', None)
+        "conversation_id": conversation_id or None
     }
-    for session_id in receivers_session_id:
-        sio.emit('typing', data, room=session_id)
+
+    for member_id in members_id:
+        receivers_session_id = [key for key, value in online_users.items() if value == member_id]
+        for session_id in receivers_session_id:
+            sio.emit('typing_start', data, room=session_id)
+
+
+@sio.on('typing_stop')
+def typing(conversation_id):
+    """
+    Args:
+        conversation_id:
+
+    Returns:
+
+    """
+
+    check_group = Group.get_by_id(conversation_id)
+    members_id = [conversation_id]
+    if check_group:
+        members = GroupUser.get_by_group_id(conversation_id)
+        members_id = [m.user_id for m in members]
+
+    current_user_id = online_users.get(request.sid)
+    data = {
+        "user_id": current_user_id,
+        "conversation_id": conversation_id or None
+    }
+
+    for member_id in members_id:
+        receivers_session_id = [key for key, value in online_users.items() if value == member_id]
+        for session_id in receivers_session_id:
+            sio.emit('typing_stop', data, room=session_id)
 
 
 @sio.on('message')

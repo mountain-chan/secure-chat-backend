@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required
 from werkzeug.security import safe_str_cmp
 from werkzeug.utils import secure_filename
 
-from app.enums import AVATAR_PATH, DEFAULT_AVATAR, AVATAR_PATH_SEVER, DEFAULT_GROUP_AVATAR
+from app.enums import AVATAR_PATH, AVATAR_PATH_SEVER, DEFAULT_GROUP_AVATAR
 from app.extensions import logger, db, sio
 from app.models import User, GroupUser, Group
 from app.utils import send_result, send_error, get_datetime_now, get_timestamp_now, allowed_file_img
