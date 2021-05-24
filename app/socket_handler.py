@@ -81,6 +81,8 @@ def typing(payload: dict):
     if check_group:
         members = GroupUser.get_by_group_id(conversation_id)
         members_id = [m.user_id for m in members if m.user_id != current_user_id]
+    else:
+        payload['conversationId'] = current_user_id
 
     for member_id in members_id:
         receivers_session_id = [key for key, value in online_users.items() if value == member_id]
