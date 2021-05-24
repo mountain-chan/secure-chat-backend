@@ -74,6 +74,11 @@ def chat_private(receiver_id):
     for session_id in receivers_session_id:
         sio.emit('new_private_msg', data, room=session_id)
 
+    unseen_messages = Message.query.filter_by(sender_id=receiver_id, group_id=group_id, seen=False).all()
+    for msg in unseen_messages:
+        msg.seen = True
+    db.session.commit()
+
     data["message"] = messages[current_user_id]
     return send_result(data=data)
 

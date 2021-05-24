@@ -64,6 +64,14 @@ def chat_group(group_id):
         receivers_session_id = [key for key, value in online_users.items() if value == member_id]
         for session_id in receivers_session_id:
             sio.emit('new_group_msg', data, room=session_id)
+
+    unseen_messages = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,
+                                                    UserMessageGroup.group_id == group_id,
+                                                    UserMessageGroup.seen == False).all()
+    for msg in unseen_messages:
+        msg.seen = True
+    db.session.commit()
+
     data["message"] = messages[current_user_id]
     return send_result(data=data)
 
