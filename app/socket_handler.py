@@ -64,16 +64,17 @@ def auth(token):
     sio.emit('online', user_id, broadcast=True)
 
 
-@sio.on('typing_start')
-def typing(conversation_id):
+@sio.on('typing')
+def typing(payload: dict):
     """
     Args:
-        conversation_id:
+        payload: {conversationId: string; isTyping: boolean; };
 
     Returns:
 
     """
 
+    conversation_id = payload.get('conversationId', None)
     check_group = Group.get_by_id(conversation_id)
     members_id = [conversation_id]
     current_user_id = online_users.get(request.sid)
@@ -81,43 +82,10 @@ def typing(conversation_id):
         members = GroupUser.get_by_group_id(conversation_id)
         members_id = [m.user_id for m in members if m.user_id != current_user_id]
 
-    data = {
-        "user_id": current_user_id,
-        "conversation_id": conversation_id or None
-    }
-
     for member_id in members_id:
         receivers_session_id = [key for key, value in online_users.items() if value == member_id]
         for session_id in receivers_session_id:
-            sio.emit('typing_start', data, room=session_id)
-
-
-@sio.on('typing_stop')
-def typing(conversation_id):
-    """
-    Args:
-        conversation_id:
-
-    Returns:
-
-    """
-
-    check_group = Group.get_by_id(conversation_id)
-    members_id = [conversation_id]
-    if check_group:
-        members = GroupUser.get_by_group_id(conversation_id)
-        members_id = [m.user_id for m in members]
-
-    current_user_id = online_users.get(request.sid)
-    data = {
-        "user_id": current_user_id,
-        "conversation_id": conversation_id or None
-    }
-
-    for member_id in members_id:
-        receivers_session_id = [key for key, value in online_users.items() if value == member_id]
-        for session_id in receivers_session_id:
-            sio.emit('typing_stop', data, room=session_id)
+            sio.emit('typing', payload, room=session_id)
 
 
 @sio.on('message')
