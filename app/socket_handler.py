@@ -76,11 +76,11 @@ def typing(conversation_id):
 
     check_group = Group.get_by_id(conversation_id)
     members_id = [conversation_id]
+    current_user_id = online_users.get(request.sid)
     if check_group:
         members = GroupUser.get_by_group_id(conversation_id)
-        members_id = [m.user_id for m in members]
+        members_id = [m.user_id for m in members if m.user_id != current_user_id]
 
-    current_user_id = online_users.get(request.sid)
     data = {
         "user_id": current_user_id,
         "conversation_id": conversation_id or None
