@@ -173,7 +173,7 @@ class Friend(db.Model):
 class Message(db.Model):
     __tablename__ = 'messages'
     __table_args__ = (
-        Index('index_get', 'group_id', 'created_date'),
+        Index('index_get', 'group_id', 'created_date', 'seen'),
     )
     # TODO oder_by desc filed created_date
 
@@ -222,7 +222,7 @@ class Message(db.Model):
 
     @classmethod
     def get_messages(cls, group_id, page=1, page_size=10):
-        return cls.query.filter_by(group_id=group_id) \
+        return cls.query.filter_by(group_id=group_id, seen=False) \
             .add_columns(UserMessage.message) \
             .join(UserMessage, cls.id == UserMessage.message_id) \
             .filter(UserMessage.user_id == get_jwt_identity()) \
@@ -333,7 +333,7 @@ class GroupMessage(db.Model):
             .add_columns(UserMessageGroup.message) \
             .add_columns(UserMessageGroup.seen) \
             .join(UserMessageGroup, cls.id == UserMessageGroup.message_id) \
-            .filter(UserMessageGroup.user_id == get_jwt_identity()) \
+            .filter(UserMessageGroup.user_id == get_jwt_identity(), UserMessageGroup.seen == False) \
             .order_by(cls.created_date.desc()).paginate(page=page, per_page=page_size, error_out=False).items
 
 
