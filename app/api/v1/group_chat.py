@@ -146,7 +146,7 @@ def get_chats():
             .add_columns(UserMessageGroup.message) \
             .add_columns(UserMessageGroup.seen) \
             .join(UserMessageGroup, GroupMessage.id == UserMessageGroup.message_id) \
-            .filter(UserMessageGroup.user_id == current_user_id) \
+            .filter(UserMessageGroup.user_id == current_user_id, UserMessageGroup.seen == False) \
             .order_by(GroupMessage.created_date.desc()).first()
 
         unseen = UserMessageGroup.query.filter(UserMessageGroup.user_id == current_user_id,

@@ -147,7 +147,7 @@ def get_chats():
 
     for friend in friends:
         group_id = generate_id(current_user_id, friend["id"])
-        message = Message.query.filter_by(group_id=group_id) \
+        message = Message.query.filter_by(group_id=group_id, seen=False) \
             .add_columns(UserMessage.message) \
             .join(UserMessage, Message.id == UserMessage.message_id) \
             .filter(UserMessage.user_id == current_user_id) \
