@@ -21,7 +21,7 @@ API documents: [https://documenter.getpostman.com/view/9825969/TzJpjL65](https:/
 python migrate/init_db.py
 ```
 
-## Stating
+## Starting
 ```
 python main.py
 ```
