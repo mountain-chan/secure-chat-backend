@@ -2,14 +2,15 @@ import json
 from flask import Flask
 
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from app.extensions import db
 from app.models import User
-from app.settings import DevConfig, ProdConfig, os
+from app.settings import AppConfig
 
-CONFIG = DevConfig if os.environ.get('DevConfig') == '1' else ProdConfig
-default_file = "default.json" if os.environ.get('DevConfig') == '1' else "migrate/default.json"
+CONFIG = AppConfig
+default_file = "migrate/default.json"
 
 
 class Worker:
@@ -22,7 +23,9 @@ class Worker:
         app_context = app.app_context()
         app_context.push()
 
-        print("=" * 25, f"Starting migrate database on the uri: {CONFIG.SQLALCHEMY_DATABASE_URI}", "=" * 25)
+        print("=" * 25,
+              f"Starting migrate database on the uri: {CONFIG.SQLALCHEMY_DATABASE_URI}",
+              "=" * 25)
         db.drop_all()  # drop all tables
         db.create_all()  # create a new schema
 
@@ -42,5 +45,5 @@ class Worker:
 
 if __name__ == '__main__':
     worker = Worker()
-    # worker.insert_default_users()
+    worker.insert_default_users()
     print("=" * 50, "Database migration completed", "=" * 50)

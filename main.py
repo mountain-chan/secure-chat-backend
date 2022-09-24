@@ -1,9 +1,9 @@
 from app.app import create_app
 from app.extensions import sio
 
-from app.settings import DevConfig, ProdConfig, os
+from app.settings import AppConfig
 
-CONFIG = DevConfig if os.environ.get('DevConfig') == '1' else ProdConfig
+CONFIG = AppConfig
 
 app = create_app(config_object=CONFIG)
 
@@ -12,4 +12,4 @@ if __name__ == '__main__':
     Main Application
     python main.py
     """
-    sio.run(app, host='0.0.0.0', port=5012)
+    sio.run(app, host='0.0.0.0', port=5010)

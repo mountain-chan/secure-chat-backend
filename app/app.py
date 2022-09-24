@@ -6,10 +6,10 @@ from flask import Flask, request
 from flask_cors import CORS
 from app.extensions import jwt, logger, db, ma, sio
 from .api import v1 as api_v1
-from .settings import ProdConfig
+from .settings import AppConfig
 
 
-def create_app(config_object=ProdConfig):
+def create_app(config_object=AppConfig):
     """
     Init App
     :param config_object:
@@ -74,8 +74,11 @@ def register_extensions(app):
         ts = strftime('[%Y-%b-%d %H:%M]')
         tb = traceback.format_exc()
         message = "5xx INTERNAL SERVER ERROR"
-        error = '{} {} {} {} {} {} {} \n{}'.format(ts, request.remote_addr, request.method, request.scheme,
-                                                   request.full_path, message, str(e), tb)
+        error = '{} {} {} {} {} {} {} \n{}'.format(ts, request.remote_addr,
+                                                   request.method,
+                                                   request.scheme,
+                                                   request.full_path, message,
+                                                   str(e), tb)
         logger.error(error)
 
         return "Internal Server Error", 500
@@ -91,5 +94,5 @@ def register_blueprints(app):
     app.register_blueprint(api_v1.user.api, url_prefix='/api/v1/users')
     app.register_blueprint(api_v1.chat.api, url_prefix='/api/v1/chats')
     app.register_blueprint(api_v1.group.api, url_prefix='/api/v1/groups')
-    app.register_blueprint(api_v1.group_chat.api, url_prefix='/api/v1/group_chats')
-
+    app.register_blueprint(api_v1.group_chat.api,
+                           url_prefix='/api/v1/group_chats')
